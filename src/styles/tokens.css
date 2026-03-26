@@ -1,8 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    Sphere UI — Design Tokens
-   Dashboard theme: dark-only, orange accent.
-   Used by: sphere-backoffice, sphere-dev
+   Brand: Unicity Brand Guidelines
+   Used by: sphere, sphere-backoffice, sphere-dev, sphere-quest
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Brand fonts — Anton (headlines), Geist (body), Geist Mono (code) */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@300..900&family=Geist+Mono:wght@300..700&display=swap');
 
 :root {
   color-scheme: dark;
