@@ -1,0 +1,132 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sphere UI — Reusable Component Classes
+   Uses CSS custom properties from tokens.css for light/dark mode support.
+   Consumers can use these classes OR Tailwind utilities directly.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Cards ───────────────────────────────────────────────────────────── */
+.sphere-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sphere-card:hover {
+  border-color: var(--color-border-secondary);
+}
+.sphere-card-glow {
+  background: var(--color-bg-card);
+  border: 1px solid rgba(255, 111, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glow);
+}
+
+/* ─── Inputs ──────────────────────────────────────────────────────────── */
+.sphere-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sphere-input:focus { border-color: var(--color-border-focus); }
+.sphere-input::placeholder { color: var(--color-text-muted); }
+
+.sphere-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s;
+}
+.sphere-textarea:focus { border-color: var(--color-border-focus); }
+
+.sphere-select {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ─── Tables ──────────────────────────────────────────────────────────── */
+.sphere-table { width: 100%; border-collapse: collapse; }
+.sphere-table th {
+  text-align: left; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--color-text-muted); padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border-primary); user-select: none;
+}
+.sphere-table td {
+  padding: 12px 16px; font-size: 14px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+.sphere-table tbody tr:hover td { background: var(--color-bg-hover); }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: var(--color-brand-orange);
+  color: white; font-size: 14px; font-weight: 600;
+  border: none; border-radius: var(--radius-md);
+  cursor: pointer; transition: background 0.15s, box-shadow 0.15s;
+}
+.btn-primary:hover { background: var(--color-brand-orange-dark); box-shadow: var(--shadow-glow); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: var(--color-bg-elevated);
+  color: var(--color-text-primary); font-size: 14px; font-weight: 500;
+  border: 1px solid var(--color-border-primary); border-radius: var(--radius-md);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.btn-secondary:hover { background: var(--color-bg-hover); border-color: var(--color-border-secondary); }
+
+.btn-danger {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: rgba(239, 68, 68, 0.15);
+  color: #f87171; font-size: 14px; font-weight: 500;
+  border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md);
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+/* ─── Badges ──────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: 9999px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.badge-green  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+.badge-orange { background: var(--color-brand-orange-dim); color: var(--color-brand-orange); border: 1px solid rgba(255,111,0,0.2); }
+.badge-gray   { background: rgba(255,255,255,0.06); color: var(--color-text-muted); border: 1px solid var(--color-border-primary); }
+.badge-yellow { background: rgba(250,204,21,0.1);  color: #fbbf24; border: 1px solid rgba(250,204,21,0.2); }
+.badge-red    { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+.badge-blue   { background: rgba(59,130,246,0.1);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+.badge-purple { background: rgba(139,92,246,0.1);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+
+/* ─── Backward compat aliases (admin-* → sphere-*) ───────────────────── */
+.admin-card { composes: sphere-card; }
+.admin-card-glow { composes: sphere-card-glow; }
+.admin-input { composes: sphere-input; }
+.admin-textarea { composes: sphere-textarea; }
+.admin-select { composes: sphere-select; }
+.admin-table { composes: sphere-table; }
