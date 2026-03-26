@@ -1,132 +1,121 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Sphere UI — Reusable Component Classes
-   Uses CSS custom properties from tokens.css for light/dark mode support.
-   Consumers can use these classes OR Tailwind utilities directly.
+   Sphere UI — Component Classes
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Cards ───────────────────────────────────────────────────────────── */
-.sphere-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-primary);
+/* ─── Card ─────────────────────────────────────────────────────────────── */
+.admin-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.sphere-card:hover {
-  border-color: var(--color-border-secondary);
-}
-.sphere-card-glow {
-  background: var(--color-bg-card);
-  border: 1px solid rgba(255, 111, 0, 0.15);
+.admin-card-glow {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-focus);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glow);
 }
 
-/* ─── Inputs ──────────────────────────────────────────────────────────── */
-.sphere-input {
+/* ─── Inputs ─────────────────────────────────────────────────────────── */
+.admin-input {
   width: 100%;
-  padding: 8px 12px;
-  background: var(--color-bg-input);
-  border: 1px solid var(--color-border-primary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-family: var(--font-sans);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-family: var(--font-body);
+  color: var(--text-primary);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.sphere-input:focus { border-color: var(--color-border-focus); }
-.sphere-input::placeholder { color: var(--color-text-muted); }
-
-.sphere-textarea {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--color-bg-input);
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-family: var(--font-sans);
-  outline: none;
-  resize: vertical;
-  min-height: 80px;
-  transition: border-color 0.15s;
+.admin-input::placeholder { color: var(--text-muted); }
+.admin-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.08), inset 0 0 0 1px rgba(255, 111, 0, 0.1);
 }
-.sphere-textarea:focus { border-color: var(--color-border-focus); }
-
-.sphere-select {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--color-bg-input);
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: 14px;
-  outline: none;
-  cursor: pointer;
+.admin-input-error { border-color: rgba(239, 68, 68, 0.5) !important; }
+.admin-input-error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important; }
+select.admin-input {
+  appearance: none;
+  color: var(--text-primary);
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.28)' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 2rem;
 }
 
-/* ─── Tables ──────────────────────────────────────────────────────────── */
-.sphere-table { width: 100%; border-collapse: collapse; }
-.sphere-table th {
-  text-align: left; font-size: 11px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.05em;
-  color: var(--color-text-muted); padding: 10px 16px;
-  border-bottom: 1px solid var(--color-border-primary); user-select: none;
+/* ─── Tables ─────────────────────────────────────────────────────────── */
+.admin-table { width: 100%; font-size: 0.8125rem; border-collapse: separate; border-spacing: 0; }
+.admin-table thead { position: sticky; top: 0; z-index: 1; }
+.admin-table th {
+  text-align: left; font-family: var(--font-body); font-size: 0.65rem; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: var(--bg-root);
 }
-.sphere-table td {
-  padding: 12px 16px; font-size: 14px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  color: var(--color-text-primary);
-}
-.sphere-table tbody tr:hover td { background: var(--color-bg-hover); }
+.admin-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle); }
+.admin-table tbody tr { transition: background-color 0.12s; }
+.admin-table tbody tr:hover { background: rgba(255, 111, 0, 0.06); }
+.admin-table tbody tr:last-child td { border-bottom: none; }
 
-/* ─── Buttons ─────────────────────────────────────────────────────────── */
+/* ─── Badges ─────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; font-family: var(--font-body);
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 4px;
+}
+.badge-green  { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.15); }
+.badge-yellow { background: rgba(245, 158, 11, 0.1);  color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.15); }
+.badge-red    { background: rgba(239, 68, 68, 0.1);   color: #f87171; border: 1px solid rgba(239, 68, 68, 0.15); }
+.badge-blue   { background: rgba(59, 130, 246, 0.1);  color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.15); }
+.badge-purple { background: rgba(168, 85, 247, 0.1);  color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.15); }
+.badge-cyan   { background: rgba(6, 182, 212, 0.1);   color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.15); }
+.badge-gray   { background: rgba(255, 255, 255, 0.04);color: #737373; border: 1px solid rgba(255, 255, 255, 0.06); }
+.badge-orange { background: rgba(255, 111, 0, 0.1);   color: #FF6F00; border: 1px solid rgba(255, 111, 0, 0.15); }
+
+/* ─── Buttons ────────────────────────────────────────────────────────── */
 .btn-primary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; background: var(--color-brand-orange);
-  color: white; font-size: 14px; font-weight: 600;
-  border: none; border-radius: var(--radius-md);
-  cursor: pointer; transition: background 0.15s, box-shadow 0.15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--font-body); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 0.5rem 1rem; border-radius: var(--radius-md); border: none; cursor: pointer; outline: none;
+  transition: all 0.15s; background: #FF6F00; color: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 16px rgba(255, 111, 0, 0.1);
 }
-.btn-primary:hover { background: var(--color-brand-orange-dark); box-shadow: var(--shadow-glow); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary:hover { background: #e06400; box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 24px rgba(255, 111, 0, 0.2); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.4; pointer-events: none; }
 
 .btn-secondary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; background: var(--color-bg-elevated);
-  color: var(--color-text-primary); font-size: 14px; font-weight: 500;
-  border: 1px solid var(--color-border-primary); border-radius: var(--radius-md);
-  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--font-body); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 0.5rem 1rem; border-radius: var(--radius-md); cursor: pointer; outline: none;
+  transition: all 0.15s; background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border);
 }
-.btn-secondary:hover { background: var(--color-bg-hover); border-color: var(--color-border-secondary); }
+.btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); border-color: rgba(255, 255, 255, 0.12); }
 
 .btn-danger {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; background: rgba(239, 68, 68, 0.15);
-  color: #f87171; font-size: 14px; font-weight: 500;
-  border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md);
-  cursor: pointer; transition: background 0.15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--font-body); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 0.5rem 1rem; border-radius: var(--radius-md); cursor: pointer; outline: none;
+  transition: all 0.15s; color: #f87171; background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.12);
 }
-.btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+.btn-danger:hover { background: rgba(239, 68, 68, 0.12); color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); }
 
-/* ─── Badges ──────────────────────────────────────────────────────────── */
-.badge {
-  display: inline-flex; align-items: center; padding: 2px 8px;
-  border-radius: 9999px; font-size: 11px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.04em;
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--font-body); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 0.5rem 1rem; border-radius: var(--radius-md); border: none; cursor: pointer; outline: none;
+  transition: all 0.15s; color: var(--text-secondary); background: transparent;
 }
-.badge-green  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
-.badge-orange { background: var(--color-brand-orange-dim); color: var(--color-brand-orange); border: 1px solid rgba(255,111,0,0.2); }
-.badge-gray   { background: rgba(255,255,255,0.06); color: var(--color-text-muted); border: 1px solid var(--color-border-primary); }
-.badge-yellow { background: rgba(250,204,21,0.1);  color: #fbbf24; border: 1px solid rgba(250,204,21,0.2); }
-.badge-red    { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
-.badge-blue   { background: rgba(59,130,246,0.1);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
-.badge-purple { background: rgba(139,92,246,0.1);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+.btn-ghost:hover { color: var(--text-primary); background: var(--bg-hover); }
 
-/* ─── Backward compat aliases (admin-* → sphere-*) ───────────────────── */
-.admin-card { composes: sphere-card; }
-.admin-card-glow { composes: sphere-card-glow; }
-.admin-input { composes: sphere-input; }
-.admin-textarea { composes: sphere-textarea; }
-.admin-select { composes: sphere-select; }
-.admin-table { composes: sphere-table; }
+/* ─── Page layout ────────────────────────────────────────────────────── */
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; }
+.page-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-primary); }
+.page-subtitle { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.125rem; }
+
+/* ─── Animations ─────────────────────────────────────────────────────── */
+@keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
