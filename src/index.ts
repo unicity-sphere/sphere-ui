@@ -1,3 +1,7 @@
+// Core form elements (Tailwind-based, matching Sphere wallet design)
+export { Input, Textarea, Select, Button } from './components/Input';
+export type { InputProps, TextareaProps, SelectProps, ButtonProps, ButtonVariant } from './components/Input';
+
 // Base components
 export { Field, Section } from './components/Field';
 export { FormModal } from './components/FormModal';
