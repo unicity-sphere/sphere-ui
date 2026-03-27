@@ -81,7 +81,7 @@ export function CustomSelect({
               onClick={() => { onChange(opt.value); setOpen(false); }}
               className={`block w-full text-left px-3 py-1.5 ${textSize} transition-colors`}
               style={{
-                color: opt.value === value ? 'var(--accent-text)' : 'var(--text-secondary)',
+                color: opt.value === value ? 'var(--accent-text)' : 'var(--text-primary)',
                 background: opt.value === value ? 'var(--accent-glow)' : 'transparent',
               }}
               onMouseEnter={e => {
