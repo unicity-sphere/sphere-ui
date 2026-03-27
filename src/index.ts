@@ -1,3 +1,9 @@
+// Layout
+export { DashboardLayout } from './components/DashboardLayout';
+export { AppLogo } from './components/AppLogo';
+export { SidebarNav } from './components/SidebarNav';
+export type { NavItem, NavGroup } from './components/SidebarNav';
+
 // Core form elements (Tailwind-based, matching Sphere wallet design)
 export { Input, Textarea, Select, Button } from './components/Input';
 export type { InputProps, TextareaProps, SelectProps, ButtonProps, ButtonVariant } from './components/Input';

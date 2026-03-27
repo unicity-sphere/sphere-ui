@@ -76,6 +76,17 @@ body {
 ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
 
-/* Anton (--font-display) is NOT applied globally to headings.
-   Sphere uses Geist for all text by default.
-   Apply Anton explicitly where needed: style={{ fontFamily: 'var(--font-display)' }} */
+/* Anton for headings in dashboard apps (admin, dev portal).
+   Add class="sphere-dashboard" on <body> or root to activate.
+   Sphere wallet does NOT use this — it uses Geist everywhere. */
+.sphere-dashboard h1,
+.sphere-dashboard h2,
+.sphere-dashboard h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
