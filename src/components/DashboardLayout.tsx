@@ -19,7 +19,7 @@ export function DashboardLayout({ logo, nav, footer, children }: DashboardLayout
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--bg-root)' }}>
+    <div className="min-h-screen flex sphere-dashboard" style={{ background: 'var(--bg-root)' }}>
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
