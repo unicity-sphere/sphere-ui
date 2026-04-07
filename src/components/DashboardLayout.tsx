@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Menu, X } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -8,6 +8,8 @@ interface DashboardLayoutProps {
   nav: ReactNode;
   /** Footer content (e.g. sign out button) */
   footer?: ReactNode;
+  /** Current path — when it changes, mobile sidebar auto-closes */
+  currentPath?: string;
   children: ReactNode;
 }
 
@@ -15,8 +17,13 @@ interface DashboardLayoutProps {
  * Dashboard shell with sidebar + main content area.
  * Used by sphere-backoffice and sphere-dev.
  */
-export function DashboardLayout({ logo, nav, footer, children }: DashboardLayoutProps) {
+export function DashboardLayout({ logo, nav, footer, currentPath, children }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [currentPath]);
 
   return (
     <div className="min-h-screen flex sphere-dashboard" style={{ background: 'var(--bg-root)' }}>
@@ -63,16 +70,14 @@ export function DashboardLayout({ logo, nav, footer, children }: DashboardLayout
           {logo}
         </div>
 
-        {/* Navigation — close mobile menu on any click inside */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <nav className="flex-1 px-3 py-3 flex flex-col overflow-y-auto" onClick={() => setMobileOpen(false)}>
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-3 flex flex-col overflow-y-auto">
           {nav}
         </nav>
 
         {/* Footer */}
         {footer && (
-          /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-          <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }} onClick={() => setMobileOpen(false)}>
+          <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
             {footer}
           </div>
         )}
