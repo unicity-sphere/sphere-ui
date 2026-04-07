@@ -30,11 +30,11 @@ export function DashboardLayout({ logo, nav, footer, children }: DashboardLayout
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-56 shrink-0 flex flex-col transition-transform lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-56 shrink-0 flex flex-col transition-transform duration-300 ease-out lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{
-          background: 'linear-gradient(180deg, rgba(255,111,0,0.03) 0%, var(--bg-root) 40%)',
+          background: 'var(--bg-root)',
           borderRight: '1px solid var(--border)',
         }}
       >
@@ -43,9 +43,23 @@ export function DashboardLayout({ logo, nav, footer, children }: DashboardLayout
           className="absolute top-0 left-0 right-0 h-px"
           style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }}
         />
+        {/* Subtle orange gradient overlay (desktop only, cosmetic) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'linear-gradient(180deg, rgba(255,111,0,0.03) 0%, transparent 40%)' }}
+        />
 
-        {/* Logo */}
-        <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+        {/* Logo + mobile close button */}
+        <div className="px-5 py-5 relative" style={{ borderBottom: '1px solid var(--border)' }}>
+          <button
+            className="lg:hidden absolute top-4 right-4 p-1 rounded-md transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            onClick={() => setMobileOpen(false)}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          >
+            <X className="w-4 h-4" />
+          </button>
           {logo}
         </div>
 
