@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Menu, X } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -8,8 +8,6 @@ interface DashboardLayoutProps {
   nav: ReactNode;
   /** Footer content (e.g. sign out button) */
   footer?: ReactNode;
-  /** Current path — when it changes, mobile sidebar auto-closes */
-  currentPath?: string;
   children: ReactNode;
 }
 
@@ -17,13 +15,8 @@ interface DashboardLayoutProps {
  * Dashboard shell with sidebar + main content area.
  * Used by sphere-backoffice and sphere-dev.
  */
-export function DashboardLayout({ logo, nav, footer, currentPath, children }: DashboardLayoutProps) {
+export function DashboardLayout({ logo, nav, footer, children }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Close mobile sidebar when route changes
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [currentPath]);
 
   return (
     <div className="min-h-screen flex sphere-dashboard" style={{ background: 'var(--bg-root)' }}>
@@ -44,13 +37,19 @@ export function DashboardLayout({ logo, nav, footer, currentPath, children }: Da
           background: 'var(--bg-root)',
           borderRight: '1px solid var(--border)',
         }}
+        onClick={(e) => {
+          // Close sidebar when any button/link inside is clicked (mobile only)
+          if ((e.target as HTMLElement).closest('button, a')) {
+            setMobileOpen(false);
+          }
+        }}
       >
         {/* Accent top edge */}
         <div
           className="absolute top-0 left-0 right-0 h-px"
           style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }}
         />
-        {/* Subtle orange gradient overlay (desktop only, cosmetic) */}
+        {/* Subtle orange gradient overlay (cosmetic) */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'linear-gradient(180deg, rgba(255,111,0,0.03) 0%, transparent 40%)' }}
