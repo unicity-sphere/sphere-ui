@@ -63,14 +63,16 @@ export function DashboardLayout({ logo, nav, footer, children }: DashboardLayout
           {logo}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-3 flex flex-col overflow-y-auto">
+        {/* Navigation — close mobile menu on any click inside */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <nav className="flex-1 px-3 py-3 flex flex-col overflow-y-auto" onClick={() => setMobileOpen(false)}>
           {nav}
         </nav>
 
         {/* Footer */}
         {footer && (
-          <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
+          /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+          <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }} onClick={() => setMobileOpen(false)}>
             {footer}
           </div>
         )}
