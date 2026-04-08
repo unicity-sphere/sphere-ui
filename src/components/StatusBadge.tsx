@@ -1,11 +1,17 @@
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE:  'badge-green',
-  DRAFT:   'badge-gray',
-  PAUSED:  'badge-yellow',
-  EXPIRED: 'badge-red',
-  ENDED:   'badge-red',
-  AWARDED: 'badge-green',
-  REJECTED:'badge-red',
+  // Quest/Achievement statuses (uppercase)
+  ACTIVE:    'badge-green',
+  DRAFT:     'badge-gray',
+  PAUSED:    'badge-yellow',
+  EXPIRED:   'badge-red',
+  ENDED:     'badge-red',
+  AWARDED:   'badge-green',
+  REJECTED:  'badge-red',
+  // Project statuses (lowercase)
+  draft:     'badge-gray',
+  review:    'badge-yellow',
+  published: 'badge-green',
+  suspended: 'badge-red',
 };
 
 interface StatusBadgeProps {
