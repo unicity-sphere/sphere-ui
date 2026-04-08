@@ -59,7 +59,7 @@ export function DataTable<T>({
       {table.getRowModel().rows.length === 0 ? (
         <EmptyState title={emptyMessage} />
       ) : (
-        <div className="admin-card overflow-visible">
+        <div className="admin-card overflow-hidden">
           <table className="admin-table">
             <thead>
               {table.getHeaderGroups().map(hg => (

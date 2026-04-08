@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface SelectOption {
   value: string;
@@ -18,20 +19,33 @@ export function CustomSelect({
   options, value, onChange, placeholder, className = '', size = 'md',
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
 
   const selected = options.find(o => o.value === value);
   const label = selected?.label ?? placeholder ?? 'Select...';
 
+  const updatePos = useCallback(() => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, []);
+
+  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target)) return;
+      if (dropRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -41,13 +55,26 @@ export function CustomSelect({
     return () => document.removeEventListener('keydown', handler);
   }, [open]);
 
+  // Reposition on scroll/resize
+  useEffect(() => {
+    if (!open) return;
+    updatePos();
+    window.addEventListener('scroll', updatePos, true);
+    window.addEventListener('resize', updatePos);
+    return () => {
+      window.removeEventListener('scroll', updatePos, true);
+      window.removeEventListener('resize', updatePos);
+    };
+  }, [open, updatePos]);
+
   const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div className={className}>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { updatePos(); setOpen(o => !o); }}
         className={`admin-input w-full flex items-center justify-between gap-2 ${textSize} text-left`}
         style={{ color: selected ? 'var(--text-primary)' : 'var(--text-muted)' }}
       >
@@ -64,10 +91,18 @@ export function CustomSelect({
           <path d="M3 4.5L6 7.5L9 4.5" />
         </svg>
       </button>
-      {open && (
+
+      {open && createPortal(
         <div
-          className="absolute left-0 right-0 top-full mt-1 z-30 py-1 max-h-48 overflow-y-auto"
+          ref={dropRef}
+          className="py-1 max-h-48 overflow-y-auto"
           style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            width: pos.width,
+            minWidth: 120,
+            zIndex: 9999,
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-md)',
@@ -94,7 +129,8 @@ export function CustomSelect({
               {opt.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
