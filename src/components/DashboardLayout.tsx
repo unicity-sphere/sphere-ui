@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
 
 /**
  * Dashboard shell with sidebar + main content area.
- * Used by sphere-backoffice and sphere-dev.
+ * Used by sphere-backoffice and sphere-dev-portal.
  */
 export function DashboardLayout({ logo, nav, footer, children }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
