@@ -7,7 +7,7 @@ Shared UI library for the Sphere ecosystem. Provides a unified design system, co
 | App | Description |
 |-----|-------------|
 | [sphere](https://github.com/unicity-sphere/sphere) | Wallet & marketplace |
-| [sphere-dev](https://github.com/unicity-sphere/sphere-dev) | Developer Portal |
+| [sphere-dev-portal](https://github.com/unicity-sphere/sphere-dev-portal) | Developer Portal |
 | [sphere-backoffice](https://github.com/unicity-sphere/sphere-backoffice) | Admin panel |
 | [sphere-quest](https://github.com/unicity-sphere/sphere-quest) | Quest frontend (iframe) |
 
