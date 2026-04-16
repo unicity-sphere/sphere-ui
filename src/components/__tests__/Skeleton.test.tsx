@@ -31,6 +31,5 @@ describe('Skeleton', () => {
     const { container } = render(<Skeleton />);
     const el = container.firstChild as HTMLElement;
     expect(el).toHaveAttribute('aria-busy', 'true');
-    expect(el).toHaveAttribute('aria-live', 'polite');
   });
 });

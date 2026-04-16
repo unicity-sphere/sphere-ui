@@ -16,6 +16,8 @@ export function SkeletonText({
   return (
     <div
       className={className}
+      role="status"
+      aria-busy="true"
       style={{ display: 'flex', flexDirection: 'column', gap }}
     >
       {Array.from({ length: lines }).map((_, i) => {
@@ -25,7 +27,7 @@ export function SkeletonText({
             key={i}
             width={isLast ? '70%' : '100%'}
             height={lineHeight}
-            radius="var(--radius-sm, 6px)"
+            radius="var(--radius-sm)"
           />
         );
       })}

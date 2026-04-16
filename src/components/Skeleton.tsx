@@ -15,7 +15,6 @@ export function Skeleton({
     <div
       className={`animate-skeleton-pulse ${className}`.trim()}
       aria-busy="true"
-      aria-live="polite"
       style={{
         width,
         height,

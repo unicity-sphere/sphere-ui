@@ -1,6 +1,6 @@
 import { Skeleton } from './Skeleton';
 
-export type SkeletonCircleSize = 'sm' | 'md' | 'lg' | string;
+export type SkeletonCircleSize = 'sm' | 'md' | 'lg' | (string & {});
 
 export interface SkeletonCircleProps {
   size?: SkeletonCircleSize;
@@ -14,7 +14,7 @@ const NAMED_SIZES: Record<'sm' | 'md' | 'lg', string> = {
 };
 
 function resolveSize(size: SkeletonCircleSize): string {
-  if (size === 'sm' || size === 'md' || size === 'lg') return NAMED_SIZES[size];
+  if (size === 'sm' || size === 'md' || size === 'lg') return NAMED_SIZES[size as 'sm' | 'md' | 'lg'];
   return size;
 }
 
