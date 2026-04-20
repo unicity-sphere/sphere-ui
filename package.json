@@ -1,6 +1,6 @@
 {
   "name": "@unicitylabs/sphere-ui",
-  "version": "0.1.13",
+  "version": "0.2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,6 +25,10 @@
     "./hooks": {
       "import": "./dist/hooks/index.js",
       "types": "./dist/hooks/index.d.ts"
+    },
+    "./analytics": {
+      "import": "./dist/analytics/index.js",
+      "types": "./dist/analytics/index.d.ts"
     }
   },
   "files": [
@@ -46,7 +50,11 @@
     "@tanstack/react-table": "^8.0.0",
     "lucide-react": ">=0.400.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "recharts": { "optional": true }
   },
   "devDependencies": {
     "@dnd-kit/core": "^6.0.0",
@@ -64,6 +72,7 @@
     "lucide-react": "^0.400.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^3.8.1",
     "tsup": "^8.0.0",
     "typescript": "~5.9.0",
     "vitest": "^2.1.9"
