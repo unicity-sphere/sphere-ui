@@ -7,6 +7,7 @@ export default defineConfig({
     'canvas/index': 'src/canvas/index.ts',
     'panels/index': 'src/panels/index.ts',
     'hooks/index': 'src/hooks/index.ts',
+    'analytics/index': 'src/analytics/index.ts',
   },
   format: ['esm'],
   dts: true,
@@ -17,6 +18,7 @@ export default defineConfig({
     '@tanstack/react-query', '@tanstack/react-table',
     '@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities',
     'lucide-react',
+    'recharts',
   ],
   jsx: 'automatic',
 });
