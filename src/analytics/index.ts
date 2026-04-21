@@ -22,3 +22,6 @@ export type { KPICardProps } from './KPICard.js';
 
 export { TopEntitiesTable } from './TopEntitiesTable.js';
 export type { TopEntitiesTableProps, TopEntity } from './TopEntitiesTable.js';
+
+export { AnalyticsSkeleton } from './AnalyticsSkeleton.js';
+export type { AnalyticsSkeletonProps } from './AnalyticsSkeleton.js';
