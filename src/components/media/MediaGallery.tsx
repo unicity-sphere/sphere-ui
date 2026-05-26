@@ -54,7 +54,11 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
   }
 
   return (
-    <div className="space-y-2">
+    <div
+      className="space-y-2"
+      onDragOver={e => e.preventDefault()}
+      onDrop={e => e.preventDefault()}
+    >
       <div className="text-sm text-[--text-secondary]">Screenshots ({items.length}/{max})</div>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map(i => i.url)} strategy={horizontalListSortingStrategy}>
@@ -85,7 +89,12 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
             ownerId={ownerId}
             uploadFn={uploadFn}
             onChange={url => {
-              if (url) onChange([...items, { type: 'screenshot', url }]);
+              if (url) {
+                const isDuplicate = items.some(i => i.url === url);
+                if (!isDuplicate) {
+                  onChange([...items, { type: 'screenshot', url }]);
+                }
+              }
               setAdding(false);
             }}
             label="Add screenshot"
