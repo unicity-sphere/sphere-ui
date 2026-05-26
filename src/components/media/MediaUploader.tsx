@@ -145,8 +145,21 @@ export function MediaUploader({
         )}
         {state.phase === 'uploading' && (
           <>
+            {previewRef.current && (
+              <img
+                src={previewRef.current}
+                alt="upload preview"
+                className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mx-auto mb-2"
+              />
+            )}
             <div className="text-sm">Uploading {state.file.name}…</div>
-            <progress className="w-full" value={state.progress} max={100} />
+            <progress
+              className="w-full"
+              value={state.progress}
+              max={100}
+              aria-label="upload progress"
+              aria-valuetext={`${state.progress}%`}
+            />
             <button
               type="button"
               onClick={(e) => {
