@@ -21,5 +21,6 @@ export function isSizeAllowed(kind: MediaKind, size: number): boolean {
 export function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < MB) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / MB).toFixed(1)} MB`;
+  const mb = bytes / MB;
+  return Number.isInteger(mb) ? `${mb} MB` : `${mb.toFixed(1)} MB`;
 }
