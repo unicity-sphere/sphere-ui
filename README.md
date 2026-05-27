@@ -6,10 +6,11 @@ Shared UI library for the Sphere ecosystem. Provides a unified design system, co
 
 | App | Description |
 |-----|-------------|
-| [sphere](https://github.com/unicity-sphere/sphere) | Wallet & marketplace |
 | [sphere-dev-portal](https://github.com/unicity-sphere/sphere-dev-portal) | Developer Portal |
 | [sphere-backoffice](https://github.com/unicity-sphere/sphere-backoffice) | Admin panel |
 | [sphere-quest](https://github.com/unicity-sphere/sphere-quest) | Quest frontend (iframe) |
+
+> **Planned migration: sphere wallet** — the sphere wallet currently does not consume sphere-ui; migration is a separate multi-PR project tracked outside this repo.
 
 ## Installation
 
@@ -138,6 +139,16 @@ Defined in `src/styles/tokens.css` via `@theme {}` block:
 | `badge-yellow` | Yellow status badge |
 
 Backward-compatible aliases `admin-card`, `admin-input`, etc. are also available.
+
+## Media components (v0.1.16+)
+
+For uploading images (logos, banners, screenshots) and rendering marketplace cards:
+
+- `<MediaUploader>` — drag-drop file upload + URL paste with progress, validation, error states. Pass an `uploadFn` prop that performs your presign → PUT → confirm flow against your backend.
+- `<MediaGallery>` — sortable list of screenshots (max 10) via @dnd-kit; uses `<MediaUploader>` inline for adding items.
+- `<MarketplaceProjectCard>` — live preview of how a project card will look in the sphere wallet marketplace. First marketplace-tier component in sphere-ui (rest are admin-tier).
+
+Helper exports: `MEDIA_LIMITS`, `isMimeAllowed`, `isSizeAllowed`, `humanSize`. Types: `MediaKind`, `MediaMime`, `MediaLimit`, `MediaUploadFn`, `MediaUploadResult`, `MediaItem`.
 
 ## Development
 

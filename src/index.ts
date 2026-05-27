@@ -33,5 +33,8 @@ export { MemoConditionsEditor } from './components/MemoConditionsEditor';
 export type { MemoCondition } from './components/MemoConditionsEditor';
 export * from './components/Icons';
 
+// Media components (uploader, gallery, marketplace preview)
+export * from './components/media/index.js';
+
 // Types
 export * from './types';
