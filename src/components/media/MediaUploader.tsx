@@ -7,6 +7,7 @@ import {
   humanSize,
 } from './media-limits.js';
 import type { MediaKind, MediaUploadFn } from './types.js';
+import { Input } from '../Input.js';
 
 export interface MediaUploaderProps {
   kind: MediaKind;
@@ -253,13 +254,12 @@ export function MediaUploader({
       {!deferUpload && (
         <>
           <div className="text-xs text-[--text-muted]">or paste URL:</div>
-          <input
+          <Input
             type="url"
             placeholder="https://..."
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             onBlur={() => urlInput && onChange(urlInput)}
-            className="w-full bg-[--bg-surface] border border-[--border] rounded-[--radius-sm] px-3 py-2 text-sm"
           />
         </>
       )}
