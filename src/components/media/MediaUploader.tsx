@@ -55,6 +55,9 @@ export function MediaUploader({
   const [state, setState] = useState<State>({ phase: 'idle' });
   const [urlInput, setUrlInput] = useState(value && !value.startsWith('blob:') ? value : '');
   const previewRef = useRef<string | null>(null);
+  // Some legacy project records have logoUrl pointing to placehold.co — treat
+  // these as "no logo" so the preview img doesn't render an orphan placeholder.
+  const isPlaceholder = value?.includes('placehold.co') ?? false;
 
   // Cleanup blob URL on unmount
   useEffect(
@@ -261,7 +264,7 @@ export function MediaUploader({
         </>
       )}
 
-      {value && (
+      {value && !isPlaceholder && (
         <img
           src={value}
           alt="current value preview"
