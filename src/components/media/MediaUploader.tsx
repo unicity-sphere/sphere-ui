@@ -16,11 +16,23 @@ export interface MediaUploaderProps {
   onChange: (url: string | null) => void;
   uploadFn: MediaUploadFn;
   label?: string;
+  /**
+   * When true, do NOT call uploadFn on file selection. Instead store the file
+   * locally, render a blob-URL preview, and call onFileSelected(file). The
+   * consumer is responsible for uploading later (e.g. after creating the
+   * parent entity to get a real ownerId).
+   *
+   * In this mode the URL paste fallback is hidden — the parent entity does
+   * not yet exist, so an external URL can't be persisted to it anyway.
+   */
+  deferUpload?: boolean;
+  onFileSelected?: (file: File | null) => void;
 }
 
 type State =
   | { phase: 'idle' }
   | { phase: 'uploading'; file: File; progress: number; abort: AbortController }
+  | { phase: 'pending';   file: File }
   | { phase: 'done' }
   | { phase: 'error'; message: string };
 
@@ -36,6 +48,8 @@ export function MediaUploader({
   onChange,
   uploadFn,
   label,
+  deferUpload,
+  onFileSelected,
 }: MediaUploaderProps) {
   const limit = MEDIA_LIMITS[kind];
   const [state, setState] = useState<State>({ phase: 'idle' });
@@ -70,6 +84,17 @@ export function MediaUploader({
         return;
       }
 
+      // Defer mode: store the file, show preview, notify parent. No upload yet.
+      if (deferUpload) {
+        if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+        previewRef.current = URL.createObjectURL(file);
+        setState({ phase: 'pending', file });
+        onFileSelected?.(file);
+        // Make sure no stale published URL is left in the parent form.
+        onChange(null);
+        return;
+      }
+
       const abort = new AbortController();
       setState({ phase: 'uploading', file, progress: 0, abort });
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -95,7 +120,7 @@ export function MediaUploader({
         setState({ phase: 'error', message });
       }
     },
-    [kind, ownerType, ownerId, uploadFn, onChange, limit],
+    [kind, ownerType, ownerId, uploadFn, onChange, limit, deferUpload, onFileSelected],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -122,6 +147,15 @@ export function MediaUploader({
       }
     },
   });
+
+  const clearPending = () => {
+    if (previewRef.current) {
+      URL.revokeObjectURL(previewRef.current);
+      previewRef.current = null;
+    }
+    setState({ phase: 'idle' });
+    onFileSelected?.(null);
+  };
 
   return (
     <div className="space-y-2">
@@ -172,6 +206,29 @@ export function MediaUploader({
             </button>
           </>
         )}
+        {state.phase === 'pending' && (
+          <>
+            {previewRef.current && (
+              <img
+                src={previewRef.current}
+                alt="selected file preview"
+                className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mx-auto mb-2"
+              />
+            )}
+            <div className="text-sm text-green-500">✓ Selected (uploads when you save)</div>
+            <div className="text-xs text-[--text-muted] mt-1">{state.file.name}</div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearPending();
+              }}
+              className="text-xs mt-1 underline"
+            >
+              Remove
+            </button>
+          </>
+        )}
         {state.phase === 'done' && <div className="text-sm text-green-500">✓ Uploaded</div>}
         {state.phase === 'error' && (
           <>
@@ -190,15 +247,19 @@ export function MediaUploader({
         )}
       </div>
 
-      <div className="text-xs text-[--text-muted]">or paste URL:</div>
-      <input
-        type="url"
-        placeholder="https://..."
-        value={urlInput}
-        onChange={(e) => setUrlInput(e.target.value)}
-        onBlur={() => urlInput && onChange(urlInput)}
-        className="w-full bg-[--bg-surface] border border-[--border] rounded-[--radius-sm] px-3 py-2 text-sm"
-      />
+      {!deferUpload && (
+        <>
+          <div className="text-xs text-[--text-muted]">or paste URL:</div>
+          <input
+            type="url"
+            placeholder="https://..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onBlur={() => urlInput && onChange(urlInput)}
+            className="w-full bg-[--bg-surface] border border-[--border] rounded-[--radius-sm] px-3 py-2 text-sm"
+          />
+        </>
+      )}
 
       {value && (
         <img
