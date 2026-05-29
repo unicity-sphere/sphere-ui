@@ -11,22 +11,25 @@ describe('<MarketplaceProjectCard>', () => {
 
   it('renders logo when logoUrl provided', () => {
     render(<MarketplaceProjectCard name="X" logoUrl="https://cdn/logo.png" bannerUrl={null} />);
-    expect(screen.getByAltText(/logo/i)).toHaveAttribute('src', 'https://cdn/logo.png');
+    expect(screen.getByAltText('X')).toHaveAttribute('src', 'https://cdn/logo.png');
   });
 
   it('renders banner when bannerUrl provided', () => {
     render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl="https://cdn/banner.png" />);
-    expect(screen.getByAltText(/banner/i)).toHaveAttribute('src', 'https://cdn/banner.png');
+    const banner = screen.getByTestId('banner');
+    // The banner div has an inner div with backgroundImage style
+    expect(banner.innerHTML).toContain('https://cdn/banner.png');
   });
 
-  it('falls back to initials when no logo', () => {
+  it('falls back to placeholder URL when no logo', () => {
     render(<MarketplaceProjectCard name="Sphere Demo" logoUrl={null} bannerUrl={null} />);
-    expect(screen.getByText('SD')).toBeInTheDocument();
+    const img = screen.getByAltText('Sphere Demo') as HTMLImageElement;
+    expect(img.src).toContain('placehold.co');
   });
 
   it('renders rating and user count when provided', () => {
-    render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl={null} rating={4.8} userCount={1234} />);
-    expect(screen.getByText(/4\.8/)).toBeInTheDocument();
-    expect(screen.getByText(/1.2k/)).toBeInTheDocument();
+    render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl={null} users={1234} ratingCount={10} positivePercent={80} />);
+    expect(screen.getByText('1,234')).toBeInTheDocument();
+    expect(screen.getByText('80%')).toBeInTheDocument();
   });
 });
