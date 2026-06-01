@@ -30,7 +30,7 @@ function SortableTile({ item, onRemove }: { item: MediaItem; onRemove: () => voi
     transition,
   };
   return (
-    <div ref={setNodeRef} style={style} className="relative w-24 h-24 rounded-[--radius-md] border border-[--border] overflow-hidden">
+    <div ref={setNodeRef} style={style} className="relative w-24 h-24 rounded-(--radius-md) border border-(--border) overflow-hidden">
       <button {...attributes} {...listeners} aria-label="drag handle" className="absolute top-1 left-1 z-10 text-xs opacity-70 hover:opacity-100">⠿</button>
       <img src={item.url} alt={`${item.type} thumbnail`} className="w-full h-full object-cover" />
       <button
@@ -59,7 +59,7 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
       onDragOver={e => e.preventDefault()}
       onDrop={e => e.preventDefault()}
     >
-      <div className="text-sm text-[--text-secondary]">Screenshots ({items.length}/{max})</div>
+      <div className="text-sm text-(--text-secondary)">Screenshots ({items.length}/{max})</div>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map(i => i.url)} strategy={horizontalListSortingStrategy}>
           <div className="flex flex-wrap gap-2">
@@ -75,14 +75,14 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
                 type="button"
                 aria-label="add screenshot"
                 onClick={() => setAdding(true)}
-                className="w-24 h-24 rounded-[--radius-md] border-2 border-dashed border-[--border] text-2xl hover:border-[--accent]"
+                className="w-24 h-24 rounded-(--radius-md) border-2 border-dashed border-(--border) text-2xl hover:border-(--accent)"
               >+</button>
             )}
           </div>
         </SortableContext>
       </DndContext>
       {adding && (
-        <div className="border border-[--border] rounded-[--radius-md] p-3">
+        <div className="border border-(--border) rounded-(--radius-md) p-3">
           <MediaUploader
             kind="screenshot"
             ownerType={ownerType}

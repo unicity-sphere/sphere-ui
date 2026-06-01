@@ -163,19 +163,19 @@ export function MediaUploader({
 
   return (
     <div className="space-y-2">
-      {label && <div className="text-sm text-[--text-secondary]">{label}</div>}
+      {label && <div className="text-sm text-(--text-secondary)">{label}</div>}
 
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-[--radius-md] p-6 text-center cursor-pointer transition-colors ${
-          isDragActive ? 'border-[--accent] bg-[--accent-glow]' : 'border-[--border]'
+        className={`border-2 border-dashed rounded-(--radius-md) p-6 text-center cursor-pointer transition-colors ${
+          isDragActive ? 'border-(--accent) bg-(--accent-glow)' : 'border-(--border)'
         }`}
       >
         <input {...getInputProps()} aria-label="file uploader" />
         {state.phase === 'idle' && (
           <>
             <div className="text-sm mb-1">Drop image here or click to choose</div>
-            <div className="text-xs text-[--text-muted]">
+            <div className="text-xs text-(--text-muted)">
               {formatExtensions(limit.mimes)} · max {humanSize(limit.maxSize)}
               {limit.maxWidth && limit.maxHeight && ` · ${limit.maxWidth}×${limit.maxHeight}`}
             </div>
@@ -187,7 +187,7 @@ export function MediaUploader({
               <img
                 src={previewRef.current}
                 alt="upload preview"
-                className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mx-auto mb-2"
+                className="max-w-[64px] max-h-[64px] rounded-(--radius-sm) object-cover border border-(--border) mx-auto mb-2"
               />
             )}
             <div className="text-sm">Uploading {state.file.name}…</div>
@@ -216,11 +216,11 @@ export function MediaUploader({
               <img
                 src={previewRef.current}
                 alt="selected file preview"
-                className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mx-auto mb-2"
+                className="max-w-[64px] max-h-[64px] rounded-(--radius-sm) object-cover border border-(--border) mx-auto mb-2"
               />
             )}
             <div className="text-sm text-green-500">✓ Selected (uploads when you save)</div>
-            <div className="text-xs text-[--text-muted] mt-1">{state.file.name}</div>
+            <div className="text-xs text-(--text-muted) mt-1">{state.file.name}</div>
             <button
               type="button"
               onClick={(e) => {
@@ -253,7 +253,7 @@ export function MediaUploader({
 
       {!deferUpload && (
         <>
-          <div className="text-xs text-[--text-muted]">or paste URL:</div>
+          <div className="text-xs text-(--text-muted)">or paste URL:</div>
           <Input
             type="url"
             placeholder="https://..."
@@ -268,7 +268,7 @@ export function MediaUploader({
         <img
           src={value}
           alt="current value preview"
-          className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mt-2"
+          className="max-w-[64px] max-h-[64px] rounded-(--radius-sm) object-cover border border-(--border) mt-2"
         />
       )}
     </div>
