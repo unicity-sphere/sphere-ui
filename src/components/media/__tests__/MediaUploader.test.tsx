@@ -44,7 +44,9 @@ describe('<MediaUploader>', () => {
 
   it('shows current value preview when value is set', () => {
     render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" value="https://cdn/exist.png" uploadFn={noopUpload} onChange={() => {}} />);
-    expect(screen.getByAltText(/current/i)).toBeInTheDocument();
+    const preview = screen.getByAltText(/uploaded/i) as HTMLImageElement;
+    expect(preview).toBeInTheDocument();
+    expect(preview.src).toContain('https://cdn/exist.png');
   });
 
   it('rejects file over size limit (client-side)', async () => {
@@ -77,7 +79,8 @@ describe('<MediaUploader>', () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     // Wait for the pending state to render
-    expect(await screen.findByText(/Selected \(uploads when you save\)/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Uploads when you save/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Selected$/i)).toBeInTheDocument();
 
     // onFileSelected fires with the File, uploadFn never called, onChange clears any stale URL
     expect(onFileSelected).toHaveBeenCalledWith(file);
@@ -111,11 +114,11 @@ describe('<MediaUploader>', () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       // Pending banner is visible
-      expect(await screen.findByText(/Selected \(uploads when you save\)/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Uploads when you save/i)).toBeInTheDocument();
       // Filename is shown
       expect(screen.getByText('logo.png')).toBeInTheDocument();
-      // Blob preview img rendered from createObjectURL
-      const preview = screen.getByAltText(/selected file preview/i) as HTMLImageElement;
+      // Blob preview img rendered from createObjectURL (now in-dropzone, alt="uploaded")
+      const preview = screen.getByAltText(/uploaded/i) as HTMLImageElement;
       expect(preview.src).toBe('blob:fake');
       expect(createObjectURL).toHaveBeenCalledWith(file);
     } finally {

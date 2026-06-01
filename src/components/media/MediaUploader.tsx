@@ -56,6 +56,7 @@ export function MediaUploader({
   const [state, setState] = useState<State>({ phase: 'idle' });
   const [urlInput, setUrlInput] = useState(value && !value.startsWith('blob:') ? value : '');
   const previewRef = useRef<string | null>(null);
+  const fileInputRef = useRef<HTMLSpanElement | null>(null);
   // Some legacy project records have logoUrl pointing to placehold.co — treat
   // these as "no logo" so the preview img doesn't render an orphan placeholder.
   const isPlaceholder = value?.includes('placehold.co') ?? false;
@@ -152,13 +153,39 @@ export function MediaUploader({
     },
   });
 
-  const clearPending = () => {
+  // Derived "has image" state — independent of state.phase so that a value
+  // pre-filled from props (e.g. existing project with CDN logo) renders the
+  // thumbnail layout immediately on mount.
+  const hasUploadedValue = !!value && !isPlaceholder && !value.startsWith('blob:');
+  const hasPendingFile = state.phase === 'pending' && !!previewRef.current;
+  const hasDoneUpload = state.phase === 'done' && hasUploadedValue;
+  const hasImage = hasPendingFile || hasDoneUpload || (state.phase === 'idle' && hasUploadedValue);
+  const thumbnailSrc = hasPendingFile
+    ? previewRef.current!
+    : hasUploadedValue
+      ? value!
+      : '';
+  const isSelected = hasPendingFile;
+
+  const handleReplace = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Find the dropzone's input element (rendered by react-dropzone via
+    // getInputProps()) and trigger the native file picker. We use a ref
+    // attached to a wrapper span around the input so we don't have to fight
+    // with react-dropzone's typed ref prop.
+    fileInputRef.current?.querySelector('input')?.click();
+  };
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (previewRef.current) {
       URL.revokeObjectURL(previewRef.current);
       previewRef.current = null;
     }
     setState({ phase: 'idle' });
-    onFileSelected?.(null);
+    onChange(null);
+    setUrlInput('');
+    if (deferUpload) onFileSelected?.(null);
   };
 
   return (
@@ -173,8 +200,52 @@ export function MediaUploader({
             : 'border-neutral-200 dark:border-white/8'
         }`}
       >
-        <input {...getInputProps()} aria-label="file uploader" />
-        {state.phase === 'idle' && (
+        <span ref={fileInputRef} style={{ display: 'contents' }}>
+          <input {...getInputProps()} aria-label="file uploader" />
+        </span>
+        {hasImage ? (
+          <div className="flex items-center gap-4">
+            <img
+              src={thumbnailSrc}
+              alt="uploaded"
+              className="w-16 h-16 rounded-lg object-cover border border-neutral-200 dark:border-white/8 shrink-0"
+            />
+            <div className="flex-1 text-left min-w-0">
+              <div className="text-sm text-green-500 dark:text-green-400 flex items-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {isSelected ? 'Selected' : 'Uploaded'}
+              </div>
+              {isSelected && (
+                <div className="text-[10px] text-neutral-500 dark:text-white/45 mt-0.5">
+                  Uploads when you save
+                </div>
+              )}
+              {hasPendingFile && (
+                <div className="text-xs text-neutral-500 dark:text-white/45 mt-0.5 truncate">
+                  {state.file.name}
+                </div>
+              )}
+              <div className="flex gap-2 mt-2 text-xs">
+                <button
+                  type="button"
+                  onClick={handleReplace}
+                  className="text-neutral-700 dark:text-white/70 hover:text-orange-500 dark:hover:text-brand-orange underline-offset-2 hover:underline"
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="text-neutral-700 dark:text-white/70 hover:text-red-500 dark:hover:text-red-400 underline-offset-2 hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : state.phase === 'idle' ? (
           <>
             <div className="text-sm mb-1">Drop image here or click to choose</div>
             <div className="text-xs text-neutral-500 dark:text-white/45">
@@ -182,8 +253,7 @@ export function MediaUploader({
               {limit.maxWidth && limit.maxHeight && ` · ${limit.maxWidth}×${limit.maxHeight}`}
             </div>
           </>
-        )}
-        {state.phase === 'uploading' && (
+        ) : state.phase === 'uploading' ? (
           <>
             {previewRef.current && (
               <img
@@ -211,32 +281,7 @@ export function MediaUploader({
               Cancel
             </button>
           </>
-        )}
-        {state.phase === 'pending' && (
-          <>
-            {previewRef.current && (
-              <img
-                src={previewRef.current}
-                alt="selected file preview"
-                className="max-w-[64px] max-h-[64px] rounded object-cover border border-neutral-200 dark:border-white/8 mx-auto mb-2"
-              />
-            )}
-            <div className="text-sm text-green-500">✓ Selected (uploads when you save)</div>
-            <div className="text-xs text-neutral-500 dark:text-white/45 mt-1">{state.file.name}</div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                clearPending();
-              }}
-              className="text-xs mt-1 underline"
-            >
-              Remove
-            </button>
-          </>
-        )}
-        {state.phase === 'done' && <div className="text-sm text-green-500">✓ Uploaded</div>}
-        {state.phase === 'error' && (
+        ) : state.phase === 'error' ? (
           <>
             <div className="text-sm text-red-500">{state.message}</div>
             <button
@@ -250,7 +295,7 @@ export function MediaUploader({
               Try again
             </button>
           </>
-        )}
+        ) : null}
       </div>
 
       {!deferUpload && (
@@ -264,14 +309,6 @@ export function MediaUploader({
             onBlur={() => urlInput && onChange(urlInput)}
           />
         </>
-      )}
-
-      {value && !isPlaceholder && (
-        <img
-          src={value}
-          alt="current value preview"
-          className="max-w-[64px] max-h-[64px] rounded object-cover border border-neutral-200 dark:border-white/8 mt-2"
-        />
       )}
     </div>
   );
