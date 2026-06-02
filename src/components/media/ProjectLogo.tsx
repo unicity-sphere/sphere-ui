@@ -22,10 +22,26 @@ const SIZE_CLASSES: Record<ProjectLogoSize, string> = {
 };
 
 const FALLBACK_TEXT_CLASSES: Record<ProjectLogoSize, string> = {
-  sm: 'text-base',
-  md: 'text-lg',
-  lg: 'text-2xl sm:text-3xl',
+  sm: 'text-xs',
+  md: 'text-sm',
+  lg: 'text-lg sm:text-xl',
 };
+
+/**
+ * Two-letter monogram from the project name:
+ *  - "Sphere Quests"  → "SQ"
+ *  - "asfsdfsdfsdf"   → "AS"
+ *  - "X"              → "X"
+ *  - "" / undefined   → "?"
+ */
+function getInitials(name: string): string {
+  if (!name) return '?';
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
 
 /**
  * ProjectLogo — the canonical "app icon" visual: gradient tile +
@@ -61,7 +77,7 @@ export function ProjectLogo({
             'radial-gradient(at 97% 21%, rgba(255,255,255,0.1) 0px, transparent 50%)',
         }}
       />
-      {/* Corner accent */}
+      {/* Corner accent — top-right "blik" sheen */}
       <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/10 rounded-bl-full pointer-events-none" />
 
       {showImage ? (
@@ -72,9 +88,16 @@ export function ProjectLogo({
           className="absolute inset-0 w-full h-full object-cover z-10"
         />
       ) : (
-        <span className={`text-white font-bold relative z-10 ${FALLBACK_TEXT_CLASSES[size]}`}>
-          {name[0] ?? '?'}
-        </span>
+        <>
+          {/* Extra diagonal sheen — only visible on the fallback monogram tile,
+              so a logo-less project still looks like a polished pre-installed icon. */}
+          <div
+            className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-white/20 blur-md rounded-full pointer-events-none"
+          />
+          <span className={`text-white font-bold relative z-10 tracking-tight ${FALLBACK_TEXT_CLASSES[size]}`}>
+            {getInitials(name)}
+          </span>
+        </>
       )}
 
       {children}
