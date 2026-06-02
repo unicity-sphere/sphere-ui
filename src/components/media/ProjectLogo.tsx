@@ -44,6 +44,17 @@ function getInitials(name: string): string {
 }
 
 /**
+ * Some upstream tooling (seed scripts, preview pages, the legacy
+ * MarketplaceProjectCard placeholder fallback) writes synthetic placeholder
+ * URLs into `logoUrl`. They render as flat coloured tiles with a server-
+ * baked text mark, which defeats the gradient + blik + monogram pipeline.
+ * Treat them as "no logo" so the canonical fallback wins.
+ */
+function isPlaceholderUrl(url: string): boolean {
+  return /^https?:\/\/(?:placehold\.co|placeholder\.com|via\.placeholder\.com|ui-avatars\.com|placekitten\.com|dummyimage\.com)\b/i.test(url);
+}
+
+/**
  * ProjectLogo — the canonical "app icon" visual: gradient tile +
  * mesh overlay + corner accent + edge-to-edge logo image. Pure
  * presentation, no behavior — wrap it in a button/link if interactive.
@@ -61,7 +72,8 @@ export function ProjectLogo({
   children,
 }: ProjectLogoProps) {
   const [imgError, setImgError] = useState(false);
-  const showImage = logoUrl && !imgError;
+  const isReal = !!logoUrl && !isPlaceholderUrl(logoUrl);
+  const showImage = isReal && !imgError;
 
   // Match DesktopIcon's vivid two-tone gradient (`from-X-500 to-Y-500`)
   // by mixing accent with white at the bottom-right stop — accent stays
@@ -84,12 +96,15 @@ export function ProjectLogo({
             'radial-gradient(at 97% 21%, rgba(255,255,255,0.10) 0px, transparent 50%)',
         }}
       />
-      {/* Corner blik — UNDER the image (z-default). When a project ships a
-          real square logo the image fills inset-0 object-cover and naturally
-          covers the gradient/mesh/blik decorations. The blik only reads on
-          the monogram fallback, matching how built-in DesktopIcon agents
-          look (small centered icon, tile decorations visible around it). */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/10 rounded-bl-full pointer-events-none" />
+      {/* Top-half soft lighting — works across any accentColor including
+          warm/bright orange/yellow tones where a single white/10 corner blik
+          (DesktopIcon's pattern) blends in. Gives the tile an iOS-style
+          "lit from above" feel. */}
+      <div className="absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/25 to-transparent pointer-events-none" />
+      {/* Sharp corner blik — concentrated highlight in the top-right, same
+          shape as DesktopIcon's. Sits UNDER the logo image so a real square
+          logo covers it (no random gloss on photo logos). */}
+      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/30 rounded-bl-full pointer-events-none" />
 
       {showImage ? (
         <img

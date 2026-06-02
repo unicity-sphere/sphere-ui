@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { MediaItem } from './MediaGallery.js';
+import { ProjectLogo } from './ProjectLogo';
 
 export interface QuestPreviewSummary {
   slug: string;
@@ -100,7 +101,8 @@ export function ProjectPagePreview({
   achievements = [],
   tags = [],
 }: ProjectPagePreviewProps) {
-  const placeholderLogo = `https://placehold.co/80x80/${accentColor.slice(1)}/white?text=${name[0] ?? '?'}`;
+  // Placeholder URL kept only for backwards-compat on the page-preview banner
+  // background. Logo uses <ProjectLogo> below.
 
   return (
     <motion.div
@@ -128,13 +130,15 @@ export function ProjectPagePreview({
           </div>
         </div>
 
-        {/* Logo — outside overflow-hidden container */}
-        <div className="absolute -bottom-6 left-6 sm:left-8 z-10">
-          <img
-            src={logoUrl ?? placeholderLogo}
-            alt={name}
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-4 border-white dark:border-[#060606] shadow-xl"
-            onError={(e) => { (e.target as HTMLImageElement).src = placeholderLogo; }}
+        {/* Logo — outside overflow-hidden container.
+            ProjectLogo gives a unified visual: real uploaded logo fills tile;
+            missing logo falls back to gradient + monogram + corner blik. */}
+        <div className="absolute -bottom-6 left-6 sm:left-8 z-10 rounded-2xl border-4 border-white dark:border-[#060606] shadow-xl overflow-hidden">
+          <ProjectLogo
+            name={name}
+            logoUrl={logoUrl}
+            accentColor={accentColor}
+            size="lg"
           />
         </div>
       </div>

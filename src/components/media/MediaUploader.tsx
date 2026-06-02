@@ -306,7 +306,10 @@ export function MediaUploader({
             placeholder="https://..."
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
-            onBlur={() => urlInput && onChange(urlInput)}
+            // Empty input → onChange(null) so a manually-cleared URL actually
+            // saves as "no logo". Previously the `urlInput && …` guard short-
+            // circuited and the form kept the stale value.
+            onBlur={() => onChange(urlInput.trim() || null)}
           />
         </>
       )}
