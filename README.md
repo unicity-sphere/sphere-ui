@@ -140,15 +140,23 @@ Defined in `src/styles/tokens.css` via `@theme {}` block:
 
 Backward-compatible aliases `admin-card`, `admin-input`, etc. are also available.
 
-## Media components (v0.1.16+)
+## Media components
 
-For uploading images (logos, banners, screenshots) and rendering marketplace cards:
+Components for project preview UIs — same look as sphere wallet's marketplace, so dev-portal and backoffice can show creators what their project will look like.
 
+**Upload (v0.1.16+):**
 - `<MediaUploader>` — drag-drop file upload + URL paste with progress, validation, error states. Pass an `uploadFn` prop that performs your presign → PUT → confirm flow against your backend.
 - `<MediaGallery>` — sortable list of screenshots (max 10) via @dnd-kit; uses `<MediaUploader>` inline for adding items.
-- `<MarketplaceProjectCard>` — live preview of how a project card will look in the sphere wallet marketplace. First marketplace-tier component in sphere-ui (rest are admin-tier).
 
-Helper exports: `MEDIA_LIMITS`, `isMimeAllowed`, `isSizeAllowed`, `humanSize`. Types: `MediaKind`, `MediaMime`, `MediaLimit`, `MediaUploadFn`, `MediaUploadResult`, `MediaItem`.
+**Marketplace preview (v0.1.17+):**
+- `<MarketplaceProjectCard>` — 1:1 visual copy of sphere wallet's regular marketplace card. Banner + accentColor gradient, logo overflow ring, category badge, Users/Target/ThumbsUp stats, optional install button overlay. Framer-motion hover lift.
+- `<FeaturedProjectCard>` — 1:1 copy of sphere wallet's "featured" variant. Full-banner background, Star badge, bottom-overlay content.
+- `<InstalledProjectIcon>` — 1:1 copy of sphere wallet's desktop dock icon. Accepts `showLabel` prop for dock vs grid layouts.
+- `<ProjectPagePreview>` — stateless version of sphere wallet's full `/apps/:slug` page. Hero + stats + social + screenshots strip + quests + achievements + reviews placeholder. Accepts all data via props.
+
+All preview components are decorative — they don't fetch data, don't wrap navigation, don't trigger install. Use them in dev-portal/backoffice forms to show the creator what users will see.
+
+Helper exports: `MEDIA_LIMITS`, `isMimeAllowed`, `isSizeAllowed`, `humanSize`. Types: `MediaKind`, `MediaMime`, `MediaLimit`, `MediaUploadFn`, `MediaUploadResult`, `MediaItem`, `QuestPreviewSummary`, `AchievementPreviewSummary`.
 
 ## Development
 

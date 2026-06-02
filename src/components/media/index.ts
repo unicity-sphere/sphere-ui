@@ -1,5 +1,13 @@
 export { MediaUploader, type MediaUploaderProps } from './MediaUploader.js';
 export { MediaGallery, type MediaGalleryProps, type MediaItem } from './MediaGallery.js';
 export { MarketplaceProjectCard, type MarketplaceProjectCardProps } from './MarketplaceProjectCard.js';
+export { FeaturedProjectCard, type FeaturedProjectCardProps } from './FeaturedProjectCard.js';
+export { InstalledProjectIcon, type InstalledProjectIconProps } from './InstalledProjectIcon.js';
+export {
+  ProjectPagePreview,
+  type ProjectPagePreviewProps,
+  type QuestPreviewSummary,
+  type AchievementPreviewSummary,
+} from './ProjectPagePreview.js';
 export { MEDIA_LIMITS, isMimeAllowed, isSizeAllowed, humanSize } from './media-limits.js';
 export type { MediaKind, MediaMime, MediaLimit, MediaUploadFn, MediaUploadResult } from './types.js';

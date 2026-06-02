@@ -1,110 +1,151 @@
+import { motion } from 'framer-motion';
+import { Users, Target, ThumbsUp, Plus, Check } from 'lucide-react';
+
 export interface MarketplaceProjectCardProps {
   name: string;
   tagline?: string;
   logoUrl?: string | null;
   bannerUrl?: string | null;
-  rating?: number;
-  userCount?: number;
+  /** Hex like "#FF6F00". Defaults to brand orange. */
+  accentColor?: string;
+  category?: 'game' | 'defi' | 'social' | 'tool' | 'nft' | 'other' | string;
+  users?: number;
+  quests?: number;
+  positivePercent?: number;
+  ratingCount?: number;
+  /** Show install button overlay. Pass `'installed'` or `'available'` to render the right state. Pass `'none'` (default) to hide it (used in preview mode). */
+  installState?: 'none' | 'available' | 'installed';
+  /** Only fires when `installState !== 'none'`. */
+  onInstallClick?: () => void;
+  /** Optional click handler for the whole card (apps wrapping with router Link externally should leave this undefined). */
+  onClick?: () => void;
 }
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map(w => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
-
-function formatUsers(n: number): string {
-  if (n < 1000) return n.toString();
-  if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
-  return `${(n / 1_000_000).toFixed(1)}M`;
-}
+const categoryLabels: Record<string, string> = {
+  game: 'Game', defi: 'DeFi', social: 'Social', tool: 'Tool', nft: 'NFT', other: 'Other',
+};
 
 /**
- * MarketplaceProjectCard — preview of a project card in sphere wallet marketplace style.
+ * MarketplaceProjectCard — 1:1 visual copy of sphere wallet's ProjectCard.
  *
  * Used by dev-portal & backoffice as a live preview while editing a project,
- * so authors can see roughly how their card will look in the marketplace.
+ * so authors can see exactly how their card will look in the marketplace.
  *
- * Adapted to sphere-ui design tokens (dark-tier admin palette).
- * Visually adjacent to sphere wallet's ProjectCard but not a 1:1 copy.
+ * No `<Link>` dependency — wrap externally if router navigation is needed.
  */
 export function MarketplaceProjectCard({
   name,
   tagline,
   logoUrl,
   bannerUrl,
-  rating,
-  userCount,
+  accentColor = '#FF6F00',
+  category,
+  users = 0,
+  quests = 0,
+  positivePercent = 0,
+  ratingCount = 0,
+  installState = 'none',
+  onInstallClick,
+  onClick,
 }: MarketplaceProjectCardProps) {
   const hasBanner = !!bannerUrl;
-  const showStats = rating !== undefined || userCount !== undefined;
+  const installed = installState === 'installed';
+  const showInstall = installState !== 'none';
 
-  return (
-    <div className="w-[280px] rounded-[--radius-lg] overflow-hidden bg-[--bg-elevated] border border-[--border] font-[--font-body] shadow-[--shadow-md]">
-      {/* Banner */}
-      <div className="relative h-20 bg-[--bg-surface] overflow-hidden">
+  const handleInstall = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onInstallClick?.();
+  };
+
+  const placeholderLogo = `https://placehold.co/44x44/${accentColor.slice(1)}/white?text=${name[0] ?? '?'}`;
+
+  const card = (
+    <motion.div
+      whileHover={{ y: -4 }}
+      className="no-text-shadow group rounded-2xl border border-neutral-200 dark:border-white/8 hover:border-orange-500/60 dark:hover:border-brand-orange/60 hover:shadow-lg hover:shadow-orange-500/10 dark:hover:shadow-brand-orange/15 transition-all duration-200 cursor-pointer relative overflow-hidden"
+    >
+      {/* Banner background — fixed height for uniform card size */}
+      <div className="relative h-24 overflow-hidden" data-testid="banner">
         {hasBanner ? (
-          <img
-            src={bannerUrl!}
-            alt={`${name} banner`}
-            className="w-full h-full object-cover"
-          />
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+              style={{ backgroundImage: `url(${bannerUrl})` }}
+            />
+            <div className="absolute inset-0" style={{
+              background: `linear-gradient(to bottom, ${accentColor}33 0%, ${accentColor}99 100%)`,
+            }} />
+          </>
         ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(255,111,0,0.35) 0%, rgba(255,111,0,0.05) 100%)',
-            }}
-          />
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(135deg, ${accentColor}cc 0%, ${accentColor}44 100%)`,
+          }} />
+        )}
+
+        {/* Install button */}
+        {showInstall && (
+          <button
+            onClick={handleInstall}
+            title={installed ? 'Remove from Desktop' : 'Add to Desktop'}
+            className={`absolute top-3 right-3 z-10 w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-sm transition-all ${
+              installed
+                ? 'bg-green-500/30 text-white border border-green-400/40'
+                : 'bg-black/30 text-white/70 border border-white/15 hover:bg-orange-500/40 hover:text-white hover:border-orange-400/40'
+            }`}
+          >
+            {installed ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </button>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 bg-white dark:bg-white/4 dark:backdrop-blur-2xl">
+        {/* Header */}
         <div className="flex items-start gap-3">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={`${name} logo`}
-              className={`w-12 h-12 rounded-[--radius-md] object-cover bg-[--bg-surface] border border-[--border] shrink-0 ${
-                hasBanner ? '-mt-8 ring-2 ring-[--bg-elevated] relative z-10' : ''
-              }`}
-            />
-          ) : (
-            <div
-              className={`w-12 h-12 rounded-[--radius-md] flex items-center justify-center bg-[--accent-glow] text-[--accent] font-bold text-sm shrink-0 ${
-                hasBanner ? '-mt-8 ring-2 ring-[--bg-elevated] relative z-10' : ''
-              }`}
-            >
-              {initials(name)}
-            </div>
-          )}
-          <div className="flex-1 min-w-0 pt-0.5">
-            <div className="text-[--text-primary] font-medium text-sm truncate">{name}</div>
-            {tagline && (
-              <div className="text-xs text-[--text-muted] mt-0.5 truncate">{tagline}</div>
-            )}
+          <img
+            src={logoUrl ?? placeholderLogo}
+            alt={name}
+            className="w-11 h-11 rounded-xl object-cover border border-neutral-200 dark:border-white/10 shrink-0 -mt-8 ring-2 ring-white dark:ring-[#0a0a0a] shadow-lg relative z-10"
+            onError={(e) => { (e.target as HTMLImageElement).src = placeholderLogo; }}
+          />
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-neutral-900 dark:text-white text-sm truncate">{name}</h3>
+            <p className="text-neutral-500 dark:text-white/45 text-xs mt-0.5 h-8 line-clamp-2">{tagline}</p>
           </div>
         </div>
 
-        {showStats && (
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[--border-subtle] text-[11px] text-[--text-muted]">
-            {rating !== undefined && (
-              <span className="flex items-center gap-1">
-                <span className="text-[--accent]">★</span> {rating.toFixed(1)}
+        {/* Category + Stats — fixed layout */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100 dark:border-white/5">
+          {category ? (
+            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border" style={{
+              backgroundColor: `${accentColor}15`,
+              color: accentColor,
+              borderColor: `${accentColor}30`,
+            }}>
+              {categoryLabels[category] ?? category}
+            </span>
+          ) : <span />}
+          <div className="flex items-center gap-3 text-[11px] text-neutral-400 dark:text-white/35">
+            <span className="flex items-center gap-1" title="Users"><Users className="w-3 h-3" />{users.toLocaleString()}</span>
+            <span className="flex items-center gap-1" title="Active quests"><Target className="w-3 h-3" />{quests.toLocaleString()}</span>
+            {ratingCount > 0 && (
+              <span className="flex items-center gap-1" title={`${ratingCount} reviews`}>
+                <ThumbsUp className="w-3 h-3" />{positivePercent}%
               </span>
             )}
-            {userCount !== undefined && (
-              <span>· {formatUsers(userCount)} users</span>
-            )}
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block w-full text-left">
+        {card}
+      </button>
+    );
+  }
+  return card;
 }
