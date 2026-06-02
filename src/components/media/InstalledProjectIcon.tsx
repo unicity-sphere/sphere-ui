@@ -63,10 +63,10 @@ export function InstalledProjectIcon({
                 src={logoUrl}
                 alt={name}
                 onError={() => setImgError(true)}
-                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-lg relative z-10 drop-shadow-lg"
+                className="absolute inset-0 w-full h-full object-cover z-10"
               />
             ) : (
-              <span className="text-white font-bold text-lg relative z-10">{name[0] ?? '?'}</span>
+              <span className="text-white font-bold text-2xl sm:text-3xl relative z-10">{name[0] ?? '?'}</span>
             )}
           </div>
         </div>
