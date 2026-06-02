@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Star, Users, Target, ThumbsUp } from 'lucide-react';
+import { ProjectLogo } from './ProjectLogo';
 
 export interface FeaturedProjectCardProps {
   name: string;
@@ -33,8 +34,6 @@ export function FeaturedProjectCard({
   ratingCount = 0,
   onClick,
 }: FeaturedProjectCardProps) {
-  const placeholderLogo = `https://placehold.co/40x40/${accentColor.slice(1)}/white?text=${name[0] ?? '?'}`;
-
   const card = (
     <motion.div
       whileHover={{ scale: 1.02, y: -2 }}
@@ -69,11 +68,12 @@ export function FeaturedProjectCard({
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-4">
         <div className="flex items-center gap-3">
-          <img
-            src={logoUrl ?? placeholderLogo}
-            alt={name}
-            className="w-10 h-10 rounded-xl object-cover border-2 border-white/20 shadow-lg"
-            onError={(e) => { (e.target as HTMLImageElement).src = placeholderLogo; }}
+          <ProjectLogo
+            name={name}
+            logoUrl={logoUrl}
+            accentColor={accentColor}
+            size="sm"
+            className="border-2 border-white/20"
           />
           <div className="min-w-0">
             <h3 className="font-semibold text-white text-sm truncate">{name}</h3>
