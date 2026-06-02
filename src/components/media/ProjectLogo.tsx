@@ -84,10 +84,6 @@ export function ProjectLogo({
             'radial-gradient(at 97% 21%, rgba(255,255,255,0.10) 0px, transparent 50%)',
         }}
       />
-      {/* Corner accent — identical shape/opacity to DesktopIcon's blik so
-          installed apps and built-in agents read as one family. */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/10 rounded-bl-full pointer-events-none" />
-
       {showImage ? (
         <img
           src={logoUrl ?? undefined}
@@ -100,6 +96,11 @@ export function ProjectLogo({
           {getInitials(name)}
         </span>
       )}
+
+      {/* Corner blik — sits ABOVE the logo image (z-20) so the iOS-style
+          gloss highlight is visible on every project, not just monogram
+          fallbacks. Matches DesktopIcon's blik shape and opacity. */}
+      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/15 rounded-bl-full pointer-events-none z-20" />
 
       {children}
     </div>
