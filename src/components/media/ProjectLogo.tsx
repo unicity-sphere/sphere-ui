@@ -84,6 +84,13 @@ export function ProjectLogo({
             'radial-gradient(at 97% 21%, rgba(255,255,255,0.10) 0px, transparent 50%)',
         }}
       />
+      {/* Corner blik — UNDER the image (z-default). When a project ships a
+          real square logo the image fills inset-0 object-cover and naturally
+          covers the gradient/mesh/blik decorations. The blik only reads on
+          the monogram fallback, matching how built-in DesktopIcon agents
+          look (small centered icon, tile decorations visible around it). */}
+      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/10 rounded-bl-full pointer-events-none" />
+
       {showImage ? (
         <img
           src={logoUrl ?? undefined}
@@ -96,11 +103,6 @@ export function ProjectLogo({
           {getInitials(name)}
         </span>
       )}
-
-      {/* Corner blik — sits ABOVE the logo image (z-20) so the iOS-style
-          gloss highlight is visible on every project, not just monogram
-          fallbacks. Matches DesktopIcon's blik shape and opacity. */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/15 rounded-bl-full pointer-events-none z-20" />
 
       {children}
     </div>
