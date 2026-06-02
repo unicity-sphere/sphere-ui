@@ -63,22 +63,28 @@ export function ProjectLogo({
   const [imgError, setImgError] = useState(false);
   const showImage = logoUrl && !imgError;
 
+  // Layered background: top-left white tint over solid accent = vivid two-tone
+  // look without needing color-mix or a paired darker hue (matches the
+  // built-in DesktopIcon `from-X-500 to-Y-500` Tailwind gradients visually).
+  const tileBackground =
+    `linear-gradient(135deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 55%), ${accentColor}`;
+
   return (
     <div
       className={`relative ${SIZE_CLASSES[size]} flex items-center justify-center shadow-lg overflow-hidden${className ? ' ' + className : ''}`}
-      style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)` }}
+      style={{ background: tileBackground }}
     >
       {/* Mesh overlay — soft directional highlights */}
       <div
-        className="absolute inset-0 opacity-30 pointer-events-none"
+        className="absolute inset-0 opacity-40 pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(at 27% 37%, rgba(255,255,255,0.15) 0px, transparent 50%),' +
-            'radial-gradient(at 97% 21%, rgba(255,255,255,0.1) 0px, transparent 50%)',
+            'radial-gradient(at 27% 37%, rgba(255,255,255,0.20) 0px, transparent 50%),' +
+            'radial-gradient(at 97% 21%, rgba(255,255,255,0.12) 0px, transparent 50%)',
         }}
       />
-      {/* Corner accent — top-right "blik" sheen */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/10 rounded-bl-full pointer-events-none" />
+      {/* Corner accent — top-right "blik" sheen, like built-in app icons */}
+      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/20 rounded-bl-full pointer-events-none" />
 
       {showImage ? (
         <img
@@ -88,16 +94,9 @@ export function ProjectLogo({
           className="absolute inset-0 w-full h-full object-cover z-10"
         />
       ) : (
-        <>
-          {/* Extra diagonal sheen — only visible on the fallback monogram tile,
-              so a logo-less project still looks like a polished pre-installed icon. */}
-          <div
-            className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-white/20 blur-md rounded-full pointer-events-none"
-          />
-          <span className={`text-white font-bold relative z-10 tracking-tight ${FALLBACK_TEXT_CLASSES[size]}`}>
-            {getInitials(name)}
-          </span>
-        </>
+        <span className={`text-white font-bold relative z-10 tracking-tight drop-shadow-sm ${FALLBACK_TEXT_CLASSES[size]}`}>
+          {getInitials(name)}
+        </span>
       )}
 
       {children}
