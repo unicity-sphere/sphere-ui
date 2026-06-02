@@ -1,5 +1,6 @@
-import { useState, type ReactNode, type MouseEvent, type Ref } from 'react';
+import { type ReactNode, type MouseEvent, type Ref } from 'react';
 import { motion } from 'framer-motion';
+import { ProjectLogo } from './ProjectLogo';
 
 /** Loose typing — dnd-kit listeners/attributes don't fit React's HTMLButtonAttributes due to motion.button overrides. */
 type ButtonExtraProps = {
@@ -28,10 +29,11 @@ export interface InstalledProjectIconProps {
 /**
  * InstalledProjectIcon — desktop tile for an installed app/skill.
  *
- * Renders the visual (glow + colored tile + logo + label). Behavior is
- * driven entirely by props: pass `onClick` for the primary action,
- * `onContextMenu` for right-click, and `topRightAction` to overlay a
- * small action button (e.g. context-menu trigger) on the tile.
+ * Composes the shared ProjectLogo visual with a button wrapper that
+ * adds hover/tap animation, a glow halo, and a name label underneath.
+ * Behavior is driven entirely by props: pass `onClick` for the
+ * primary action, `onContextMenu` for right-click, and
+ * `topRightAction` to overlay a small action button on the tile.
  */
 export function InstalledProjectIcon({
   name,
@@ -44,8 +46,6 @@ export function InstalledProjectIcon({
   buttonRef,
   buttonProps,
 }: InstalledProjectIconProps) {
-  const [imgError, setImgError] = useState(false);
-
   return (
     <div className="relative">
       <motion.button
@@ -60,44 +60,23 @@ export function InstalledProjectIcon({
         className={`flex flex-col items-center gap-2 p-3 rounded-2xl group cursor-pointer relative${buttonProps?.className ? ' ' + buttonProps.className : ''}`}
         style={{ touchAction: 'none', ...buttonProps?.style }}
       >
-        {/* Icon */}
         <div className="relative">
-          {/* Glow */}
+          {/* Glow halo — outside the tile so it bleeds past the rounded edges */}
           <div
-            className="absolute -inset-1 blur-xl opacity-0 group-hover:opacity-50 transition-all duration-300 rounded-2xl"
+            className="absolute -inset-1 blur-xl opacity-0 group-hover:opacity-50 transition-all duration-300 rounded-2xl pointer-events-none"
             style={{ backgroundColor: accentColor }}
           />
-
-          <div
-            className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200 overflow-hidden"
-            style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)` }}
+          <ProjectLogo
+            name={name}
+            logoUrl={logoUrl}
+            accentColor={accentColor}
+            size="lg"
+            className="group-hover:shadow-xl transition-all duration-200"
           >
-            {/* Mesh overlay */}
-            <div
-              className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500"
-              style={{
-                backgroundImage: `radial-gradient(at 27% 37%, rgba(255,255,255,0.15) 0px, transparent 50%),
-                                 radial-gradient(at 97% 21%, rgba(255,255,255,0.1) 0px, transparent 50%)`,
-              }}
-            />
-            <div className="absolute top-0 right-0 w-8 h-8 bg-white/10 rounded-bl-full group-hover:w-10 group-hover:h-10 transition-all duration-300" />
-
-            {logoUrl && !imgError ? (
-              <img
-                src={logoUrl}
-                alt={name}
-                onError={() => setImgError(true)}
-                className="absolute inset-0 w-full h-full object-cover z-10"
-              />
-            ) : (
-              <span className="text-white font-bold text-2xl sm:text-3xl relative z-10">{name[0] ?? '?'}</span>
-            )}
-          </div>
-
-          {topRightAction}
+            {topRightAction}
+          </ProjectLogo>
         </div>
 
-        {/* Label */}
         {showLabel && (
           <span className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-[rgba(255,255,255,0.45)] group-hover:text-neutral-900 dark:group-hover:text-white transition-colors truncate max-w-20 sm:max-w-24 text-center leading-tight">
             {name}

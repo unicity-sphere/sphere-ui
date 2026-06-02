@@ -3,6 +3,7 @@ export { MediaGallery, type MediaGalleryProps, type MediaItem } from './MediaGal
 export { MarketplaceProjectCard, type MarketplaceProjectCardProps } from './MarketplaceProjectCard.js';
 export { FeaturedProjectCard, type FeaturedProjectCardProps } from './FeaturedProjectCard.js';
 export { InstalledProjectIcon, type InstalledProjectIconProps } from './InstalledProjectIcon.js';
+export { ProjectLogo, type ProjectLogoProps, type ProjectLogoSize } from './ProjectLogo.js';
 export {
   ProjectPagePreview,
   type ProjectPagePreviewProps,

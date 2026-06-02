@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Users, Target, ThumbsUp, Plus, Check } from 'lucide-react';
+import { ProjectLogo } from './ProjectLogo';
 
 export interface MarketplaceProjectCardProps {
   name: string;
@@ -58,8 +59,6 @@ export function MarketplaceProjectCard({
     onInstallClick?.();
   };
 
-  const placeholderLogo = `https://placehold.co/44x44/${accentColor.slice(1)}/white?text=${name[0] ?? '?'}`;
-
   const card = (
     <motion.div
       whileHover={{ y: -4 }}
@@ -100,12 +99,15 @@ export function MarketplaceProjectCard({
       <div className="p-4 bg-white dark:bg-white/4 dark:backdrop-blur-2xl">
         {/* Header */}
         <div className="flex items-start gap-3">
-          <img
-            src={logoUrl ?? placeholderLogo}
-            alt={name}
-            className="w-11 h-11 rounded-xl object-cover border border-neutral-200 dark:border-white/10 shrink-0 -mt-8 ring-2 ring-white dark:ring-[#0a0a0a] shadow-lg relative z-10"
-            onError={(e) => { (e.target as HTMLImageElement).src = placeholderLogo; }}
-          />
+          <div className="shrink-0 -mt-8 ring-2 ring-white dark:ring-[#0a0a0a] rounded-xl relative z-10">
+            <ProjectLogo
+              name={name}
+              logoUrl={logoUrl}
+              accentColor={accentColor}
+              size="md"
+              className="border border-neutral-200 dark:border-white/10"
+            />
+          </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-neutral-900 dark:text-white text-sm truncate">{name}</h3>
             <p className="text-neutral-500 dark:text-white/45 text-xs mt-0.5 h-8 line-clamp-2">{tagline}</p>
