@@ -7,6 +7,7 @@ import {
   humanSize,
 } from './media-limits.js';
 import type { MediaKind, MediaUploadFn } from './types.js';
+import { Input } from '../Input.js';
 
 export interface MediaUploaderProps {
   kind: MediaKind;
@@ -16,11 +17,23 @@ export interface MediaUploaderProps {
   onChange: (url: string | null) => void;
   uploadFn: MediaUploadFn;
   label?: string;
+  /**
+   * When true, do NOT call uploadFn on file selection. Instead store the file
+   * locally, render a blob-URL preview, and call onFileSelected(file). The
+   * consumer is responsible for uploading later (e.g. after creating the
+   * parent entity to get a real ownerId).
+   *
+   * In this mode the URL paste fallback is hidden — the parent entity does
+   * not yet exist, so an external URL can't be persisted to it anyway.
+   */
+  deferUpload?: boolean;
+  onFileSelected?: (file: File | null) => void;
 }
 
 type State =
   | { phase: 'idle' }
   | { phase: 'uploading'; file: File; progress: number; abort: AbortController }
+  | { phase: 'pending';   file: File }
   | { phase: 'done' }
   | { phase: 'error'; message: string };
 
@@ -36,11 +49,17 @@ export function MediaUploader({
   onChange,
   uploadFn,
   label,
+  deferUpload,
+  onFileSelected,
 }: MediaUploaderProps) {
   const limit = MEDIA_LIMITS[kind];
   const [state, setState] = useState<State>({ phase: 'idle' });
   const [urlInput, setUrlInput] = useState(value && !value.startsWith('blob:') ? value : '');
   const previewRef = useRef<string | null>(null);
+  const fileInputRef = useRef<HTMLSpanElement | null>(null);
+  // Some legacy project records have logoUrl pointing to placehold.co — treat
+  // these as "no logo" so the preview img doesn't render an orphan placeholder.
+  const isPlaceholder = value?.includes('placehold.co') ?? false;
 
   // Cleanup blob URL on unmount
   useEffect(
@@ -70,6 +89,17 @@ export function MediaUploader({
         return;
       }
 
+      // Defer mode: store the file, show preview, notify parent. No upload yet.
+      if (deferUpload) {
+        if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+        previewRef.current = URL.createObjectURL(file);
+        setState({ phase: 'pending', file });
+        onFileSelected?.(file);
+        // Make sure no stale published URL is left in the parent form.
+        onChange(null);
+        return;
+      }
+
       const abort = new AbortController();
       setState({ phase: 'uploading', file, progress: 0, abort });
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -95,7 +125,7 @@ export function MediaUploader({
         setState({ phase: 'error', message });
       }
     },
-    [kind, ownerType, ownerId, uploadFn, onChange, limit],
+    [kind, ownerType, ownerId, uploadFn, onChange, limit, deferUpload, onFileSelected],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -123,33 +153,113 @@ export function MediaUploader({
     },
   });
 
+  // Derived "has image" state — independent of state.phase so that a value
+  // pre-filled from props (e.g. existing project with CDN logo) renders the
+  // thumbnail layout immediately on mount.
+  const hasUploadedValue = !!value && !isPlaceholder && !value.startsWith('blob:');
+  const hasPendingFile = state.phase === 'pending' && !!previewRef.current;
+  const hasDoneUpload = state.phase === 'done' && hasUploadedValue;
+  const hasImage = hasPendingFile || hasDoneUpload || (state.phase === 'idle' && hasUploadedValue);
+  const thumbnailSrc = hasPendingFile
+    ? previewRef.current!
+    : hasUploadedValue
+      ? value!
+      : '';
+  const isSelected = hasPendingFile;
+
+  const handleReplace = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Find the dropzone's input element (rendered by react-dropzone via
+    // getInputProps()) and trigger the native file picker. We use a ref
+    // attached to a wrapper span around the input so we don't have to fight
+    // with react-dropzone's typed ref prop.
+    fileInputRef.current?.querySelector('input')?.click();
+  };
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (previewRef.current) {
+      URL.revokeObjectURL(previewRef.current);
+      previewRef.current = null;
+    }
+    setState({ phase: 'idle' });
+    onChange(null);
+    setUrlInput('');
+    if (deferUpload) onFileSelected?.(null);
+  };
+
   return (
     <div className="space-y-2">
-      {label && <div className="text-sm text-[--text-secondary]">{label}</div>}
+      {label && <div className="text-sm text-neutral-700 dark:text-white/70">{label}</div>}
 
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-[--radius-md] p-6 text-center cursor-pointer transition-colors ${
-          isDragActive ? 'border-[--accent] bg-[--accent-glow]' : 'border-[--border]'
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+          isDragActive
+            ? 'border-orange-500 dark:border-brand-orange bg-orange-500/10 dark:bg-brand-orange/15'
+            : 'border-neutral-200 dark:border-white/8'
         }`}
       >
-        <input {...getInputProps()} aria-label="file uploader" />
-        {state.phase === 'idle' && (
+        <span ref={fileInputRef} style={{ display: 'contents' }}>
+          <input {...getInputProps()} aria-label="file uploader" />
+        </span>
+        {hasImage ? (
+          <div className="flex items-center gap-4">
+            <img
+              src={thumbnailSrc}
+              alt="uploaded"
+              className="w-16 h-16 rounded-lg object-cover border border-neutral-200 dark:border-white/8 shrink-0"
+            />
+            <div className="flex-1 text-left min-w-0">
+              <div className="text-sm text-green-500 dark:text-green-400 flex items-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {isSelected ? 'Selected' : 'Uploaded'}
+              </div>
+              {isSelected && (
+                <div className="text-[10px] text-neutral-500 dark:text-white/45 mt-0.5">
+                  Uploads when you save
+                </div>
+              )}
+              {hasPendingFile && (
+                <div className="text-xs text-neutral-500 dark:text-white/45 mt-0.5 truncate">
+                  {state.file.name}
+                </div>
+              )}
+              <div className="flex gap-2 mt-2 text-xs">
+                <button
+                  type="button"
+                  onClick={handleReplace}
+                  className="text-neutral-700 dark:text-white/70 hover:text-orange-500 dark:hover:text-brand-orange underline-offset-2 hover:underline"
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="text-neutral-700 dark:text-white/70 hover:text-red-500 dark:hover:text-red-400 underline-offset-2 hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : state.phase === 'idle' ? (
           <>
             <div className="text-sm mb-1">Drop image here or click to choose</div>
-            <div className="text-xs text-[--text-muted]">
+            <div className="text-xs text-neutral-500 dark:text-white/45">
               {formatExtensions(limit.mimes)} · max {humanSize(limit.maxSize)}
               {limit.maxWidth && limit.maxHeight && ` · ${limit.maxWidth}×${limit.maxHeight}`}
             </div>
           </>
-        )}
-        {state.phase === 'uploading' && (
+        ) : state.phase === 'uploading' ? (
           <>
             {previewRef.current && (
               <img
                 src={previewRef.current}
                 alt="upload preview"
-                className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mx-auto mb-2"
+                className="max-w-[64px] max-h-[64px] rounded object-cover border border-neutral-200 dark:border-white/8 mx-auto mb-2"
               />
             )}
             <div className="text-sm">Uploading {state.file.name}…</div>
@@ -171,9 +281,7 @@ export function MediaUploader({
               Cancel
             </button>
           </>
-        )}
-        {state.phase === 'done' && <div className="text-sm text-green-500">✓ Uploaded</div>}
-        {state.phase === 'error' && (
+        ) : state.phase === 'error' ? (
           <>
             <div className="text-sm text-red-500">{state.message}</div>
             <button
@@ -187,25 +295,20 @@ export function MediaUploader({
               Try again
             </button>
           </>
-        )}
+        ) : null}
       </div>
 
-      <div className="text-xs text-[--text-muted]">or paste URL:</div>
-      <input
-        type="url"
-        placeholder="https://..."
-        value={urlInput}
-        onChange={(e) => setUrlInput(e.target.value)}
-        onBlur={() => urlInput && onChange(urlInput)}
-        className="w-full bg-[--bg-surface] border border-[--border] rounded-[--radius-sm] px-3 py-2 text-sm"
-      />
-
-      {value && (
-        <img
-          src={value}
-          alt="current value preview"
-          className="max-w-[64px] max-h-[64px] rounded-[--radius-sm] object-cover border border-[--border] mt-2"
-        />
+      {!deferUpload && (
+        <>
+          <div className="text-xs text-neutral-500 dark:text-white/45">or paste URL:</div>
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onBlur={() => urlInput && onChange(urlInput)}
+          />
+        </>
       )}
     </div>
   );

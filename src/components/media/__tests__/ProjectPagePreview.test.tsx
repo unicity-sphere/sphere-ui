@@ -34,4 +34,12 @@ describe('<ProjectPagePreview>', () => {
     const img = screen.getByRole('img', { name: /video/i });
     expect(img).toHaveAttribute('src', 'https://img.youtube.com/vi/abc123/hqdefault.jpg');
   });
+
+  it('renders first 3 tags when provided', () => {
+    render(<ProjectPagePreview name="X" slug="x" tags={['pvp', 'arena', 'rpg', 'multiplayer']} />);
+    expect(screen.getByText(/pvp/i)).toBeInTheDocument();
+    expect(screen.getByText(/arena/i)).toBeInTheDocument();
+    expect(screen.getByText(/rpg/i)).toBeInTheDocument();
+    expect(screen.queryByText(/multiplayer/i)).not.toBeInTheDocument();
+  });
 });

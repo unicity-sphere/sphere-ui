@@ -53,6 +53,8 @@ export interface ProjectPagePreviewProps {
   quests?: QuestPreviewSummary[];
   /** Sample achievements */
   achievements?: AchievementPreviewSummary[];
+  /** Project tags — first 3 are rendered as chips next to the category badge */
+  tags?: string[];
 }
 
 const categoryLabels: Record<string, string> = {
@@ -96,6 +98,7 @@ export function ProjectPagePreview({
   ratingCount = 0,
   quests = [],
   achievements = [],
+  tags = [],
 }: ProjectPagePreviewProps) {
   const placeholderLogo = `https://placehold.co/80x80/${accentColor.slice(1)}/white?text=${name[0] ?? '?'}`;
 
@@ -145,18 +148,28 @@ export function ProjectPagePreview({
               {tagline && (
                 <p className="text-neutral-500 dark:text-white/55 mt-1">{tagline}</p>
               )}
-              {category && (
+              {(category || tags.length > 0) && (
                 <div className="flex items-center gap-2 mt-3">
-                  <span
-                    className="inline-flex px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: `${accentColor}15`,
-                      color: accentColor,
-                      border: `1px solid ${accentColor}30`,
-                    }}
-                  >
-                    {categoryLabels[category] ?? category}
-                  </span>
+                  {category && (
+                    <span
+                      className="inline-flex px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: `${accentColor}15`,
+                        color: accentColor,
+                        border: `1px solid ${accentColor}30`,
+                      }}
+                    >
+                      {categoryLabels[category] ?? category}
+                    </span>
+                  )}
+                  {tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/6 text-neutral-500 dark:text-white/40 text-[10px] font-mono"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
