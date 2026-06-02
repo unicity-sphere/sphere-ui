@@ -55,6 +55,19 @@
   --radius-lg: 14px;
 }
 
+/* ─── Tailwind 4 theme map ────────────────────────────────────────────────
+   Expose the brand palette as Tailwind color tokens so consumers don't have
+   to repeat the @theme block themselves. Without these, classes like
+   `bg-brand-orange`, `dark:hover:shadow-brand-orange/15` silently no-op in
+   apps that don't redeclare the colors (e.g. sphere-dev-portal). */
+@theme {
+  --color-brand-black:       #020202;
+  --color-brand-white:       #FEFEFE;
+  --color-brand-orange:      #FF6F00;
+  --color-brand-orange-dark: #932D00;
+  --color-brand-orange-dim:  rgba(255, 111, 0, 0.08);
+}
+
 /* ─── Base ─────────────────────────────────────────────────────────────── */
 
 body {
