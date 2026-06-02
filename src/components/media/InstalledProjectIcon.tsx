@@ -28,16 +28,9 @@ export function InstalledProjectIcon({
 
   return (
     <div className="relative">
-      <motion.div
-        role="button"
-        tabIndex={0}
+      <motion.button
+        type="button"
         onClick={onClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClick?.();
-          }
-        }}
         whileHover={{ scale: 1.08, y: -4 }}
         whileTap={{ scale: 0.92 }}
         transition={{ duration: 0.05 }}
@@ -84,7 +77,7 @@ export function InstalledProjectIcon({
             {name}
           </span>
         )}
-      </motion.div>
+      </motion.button>
     </div>
   );
 }
