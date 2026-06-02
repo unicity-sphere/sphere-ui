@@ -67,21 +67,18 @@ export function MarketplaceProjectCard({
     >
       {/* Banner background — fixed height for uniform card size */}
       <div className="relative h-24 overflow-hidden" data-testid="banner">
-        {hasBanner ? (
-          <>
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-              style={{ backgroundImage: `url(${bannerUrl})` }}
-            />
-            <div className="absolute inset-0" style={{
-              background: `linear-gradient(to bottom, ${accentColor}33 0%, ${accentColor}99 100%)`,
-            }} />
-          </>
-        ) : (
-          <div className="absolute inset-0" style={{
-            background: `linear-gradient(135deg, ${accentColor}cc 0%, ${accentColor}44 100%)`,
-          }} />
-        )}
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+          style={{
+            backgroundColor: accentColor,
+            backgroundImage: hasBanner ? `url(${bannerUrl})` : undefined,
+          }}
+        />
+        <div className="absolute inset-0" style={{
+          background: hasBanner
+            ? `linear-gradient(to bottom, transparent 0%, ${accentColor}66 100%)`
+            : `linear-gradient(135deg, ${accentColor}cc 0%, ${accentColor}44 100%)`,
+        }} />
 
         {/* Install button */}
         {showInstall && (
