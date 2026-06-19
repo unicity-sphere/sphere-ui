@@ -332,7 +332,7 @@ export function MediaUploader({
       {source === 'upload' && (
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors min-h-[128px] flex flex-col items-center justify-center ${
           isDragActive
             ? 'border-orange-500 dark:border-brand-orange bg-orange-500/10 dark:bg-brand-orange/15'
             : 'border-neutral-200 dark:border-white/8'
@@ -342,7 +342,7 @@ export function MediaUploader({
           <input {...getInputProps()} aria-label="file uploader" />
         </span>
         {hasImage ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full">
             <img
               src={thumbnailSrc}
               alt="uploaded"
