@@ -6,7 +6,7 @@ import {
   isSizeAllowed,
   humanSize,
 } from './media-limits.js';
-import type { MediaKind, MediaUploadFn } from './types.js';
+import type { MediaKind, MediaUploadFn, MediaLimit } from './types.js';
 import { Input } from '../Input.js';
 
 export interface MediaUploaderProps {
@@ -59,6 +59,61 @@ async function readImageSize(file: File): Promise<{ width: number; height: numbe
   }
 }
 
+/**
+ * Fit an image to a kind's constraints: center-crop to `aspectRatio` (if set),
+ * then downscale to fit `maxWidth`/`maxHeight`, re-encoding via canvas. Returns a
+ * NEW File. Returns the original unchanged for SVG, when nothing needs changing,
+ * or when canvas/createImageBitmap is unavailable (older browsers, jsdom) — so the
+ * caller's fallback dimension check still applies in those cases.
+ */
+async function fitImage(file: File, limit: MediaLimit): Promise<File> {
+  if (file.type === 'image/svg+xml') return file;
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const sw = bitmap.width;
+    const sh = bitmap.height;
+
+    // Center-crop to honour aspectRatio (width / height).
+    let cropW = sw, cropH = sh, cropX = 0, cropY = 0;
+    if (limit.aspectRatio) {
+      if (sw / sh > limit.aspectRatio) {
+        cropW = Math.round(sh * limit.aspectRatio);
+        cropX = Math.round((sw - cropW) / 2);
+      } else if (sw / sh < limit.aspectRatio) {
+        cropH = Math.round(sw / limit.aspectRatio);
+        cropY = Math.round((sh - cropH) / 2);
+      }
+    }
+
+    // Downscale the cropped region to fit max dimensions (never upscale).
+    const scale = Math.min(1, (limit.maxWidth ?? cropW) / cropW, (limit.maxHeight ?? cropH) / cropH);
+    const outW = Math.max(1, Math.round(cropW * scale));
+    const outH = Math.max(1, Math.round(cropH * scale));
+
+    // Nothing to crop or scale → keep original bytes (avoid a needless re-encode).
+    if (cropX === 0 && cropY === 0 && cropW === sw && cropH === sh && scale === 1) {
+      bitmap.close?.();
+      return file;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bitmap.close?.(); return file; }
+    ctx.drawImage(bitmap, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+    bitmap.close?.();
+
+    const mime = file.type === 'image/jpeg' || file.type === 'image/webp' ? file.type : 'image/png';
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, mime, 0.92));
+    if (!blob) return file;
+    return new File([blob], file.name, { type: mime });
+  } catch {
+    return file;
+  }
+}
+
 export function MediaUploader({
   kind,
   ownerType,
@@ -107,12 +162,17 @@ export function MediaUploader({
         return;
       }
 
-      // Pixel dimension + aspect-ratio check, so oversized images are rejected
-      // here instead of failing the server confirm with a 422. SVG has no raster
-      // dimensions — skip it. readImageSize returns null (→ skip) when it can't
-      // decode, so this never blocks on environments without createImageBitmap.
-      if (file.type !== 'image/svg+xml') {
-        const size = await readImageSize(file);
+      // Auto-fit: center-crop to the kind's aspect ratio and downscale to its max
+      // dimensions, so a near-miss image (e.g. a 1.17:1 logo, or an oversized
+      // banner) is fixed and uploaded instead of rejected. No-op for SVG and when
+      // canvas is unavailable (older browsers, jsdom).
+      const fitted = await fitImage(file, limit);
+
+      // Fallback guard: if fitImage could not process (no canvas), reject an
+      // out-of-spec image so the server does not 422. After a successful fit this
+      // passes. SVG has no raster dimensions — skip.
+      if (fitted.type !== 'image/svg+xml') {
+        const size = await readImageSize(fitted);
         if (size) {
           const { width, height } = size;
           if ((limit.maxWidth && width > limit.maxWidth) || (limit.maxHeight && height > limit.maxHeight)) {
@@ -139,21 +199,21 @@ export function MediaUploader({
       // Defer mode: store the file, show preview, notify parent. No upload yet.
       if (deferUpload) {
         if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-        previewRef.current = URL.createObjectURL(file);
-        setState({ phase: 'pending', file });
-        onFileSelected?.(file);
+        previewRef.current = URL.createObjectURL(fitted);
+        setState({ phase: 'pending', file: fitted });
+        onFileSelected?.(fitted);
         // Make sure no stale published URL is left in the parent form.
         onChange(null);
         return;
       }
 
       const abort = new AbortController();
-      setState({ phase: 'uploading', file, progress: 0, abort });
+      setState({ phase: 'uploading', file: fitted, progress: 0, abort });
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-      previewRef.current = URL.createObjectURL(file);
+      previewRef.current = URL.createObjectURL(fitted);
 
       try {
-        const result = await uploadFn(file, {
+        const result = await uploadFn(fitted, {
           kind,
           ownerType,
           ownerId,
