@@ -59,6 +59,26 @@ describe('<MediaUploader>', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('rejects image whose dimensions exceed the limit (client-side)', async () => {
+    // jsdom has no createImageBitmap; mock it to report oversized dimensions.
+    const prev = globalThis.createImageBitmap;
+    globalThis.createImageBitmap = vi
+      .fn()
+      .mockResolvedValue({ width: 3840, height: 1080, close: vi.fn() }) as unknown as typeof createImageBitmap;
+    try {
+      const onChange = vi.fn();
+      // banner limit is 1920×640 — 3840×1080 exceeds it
+      render(<MediaUploader kind="banner" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={onChange} />);
+      const file = new File([new Uint8Array(8)], 'huge.png', { type: 'image/png' });
+      const input = screen.getByLabelText(/file/i, { selector: 'input' });
+      fireEvent.change(input, { target: { files: [file] } });
+      expect(await screen.findByText(/Image too large/i)).toBeInTheDocument();
+      expect(onChange).not.toHaveBeenCalled();
+    } finally {
+      globalThis.createImageBitmap = prev;
+    }
+  });
+
   it('calls onFileSelected (not uploadFn) when deferUpload=true', async () => {
     const uploadFn = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/x.png', assetId: 'ast_x' });
     const onFileSelected = vi.fn();

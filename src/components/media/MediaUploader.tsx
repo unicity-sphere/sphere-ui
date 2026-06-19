@@ -41,6 +41,24 @@ function formatExtensions(mimes: readonly string[]): string {
   return mimes.map((m) => m.split('/')[1]!.toUpperCase()).join(', ');
 }
 
+/**
+ * Read an image's pixel dimensions client-side via createImageBitmap (decodes a
+ * Blob directly, no DOM node). Returns null when it can't decode — a browser
+ * without createImageBitmap, a corrupt file, or a non-decoding test env (jsdom)
+ * — so the dimension check fails OPEN and the server stays the real gate.
+ */
+async function readImageSize(file: File): Promise<{ width: number; height: number } | null> {
+  if (typeof createImageBitmap !== 'function') return null;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const size = { width: bitmap.width, height: bitmap.height };
+    bitmap.close?.();
+    return size;
+  } catch {
+    return null;
+  }
+}
+
 export function MediaUploader({
   kind,
   ownerType,
@@ -87,6 +105,35 @@ export function MediaUploader({
           message: `File too large (max ${humanSize(limit.maxSize)})`,
         });
         return;
+      }
+
+      // Pixel dimension + aspect-ratio check, so oversized images are rejected
+      // here instead of failing the server confirm with a 422. SVG has no raster
+      // dimensions — skip it. readImageSize returns null (→ skip) when it can't
+      // decode, so this never blocks on environments without createImageBitmap.
+      if (file.type !== 'image/svg+xml') {
+        const size = await readImageSize(file);
+        if (size) {
+          const { width, height } = size;
+          if ((limit.maxWidth && width > limit.maxWidth) || (limit.maxHeight && height > limit.maxHeight)) {
+            setState({
+              phase: 'error',
+              message: `Image too large (max ${limit.maxWidth}×${limit.maxHeight}px — this is ${width}×${height})`,
+            });
+            return;
+          }
+          if (limit.aspectRatio) {
+            const ratio = width / height;
+            const tolerance = limit.aspectTolerance ?? 0;
+            if (Math.abs(ratio - limit.aspectRatio) > limit.aspectRatio * tolerance) {
+              setState({
+                phase: 'error',
+                message: `Wrong aspect ratio (need ~${limit.aspectRatio}:1 — this is ${ratio.toFixed(2)}:1)`,
+              });
+              return;
+            }
+          }
+        }
       }
 
       // Defer mode: store the file, show preview, notify parent. No upload yet.
