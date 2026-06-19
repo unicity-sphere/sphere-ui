@@ -69,21 +69,23 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
     onFilesChange?.(next.map(p => p.file));
   };
 
+  // URL screenshots live in `items` (both modes); deferred file screenshots live
+  // in `pending` (defer mode only), uploaded by the parent on create.
   function handleDragEnd(e: DragEndEvent) {
     if (!e.over || e.active.id === e.over.id) return;
-    if (deferUpload) {
-      const oldIndex = pending.findIndex(p => p.preview === e.active.id);
-      const newIndex = pending.findIndex(p => p.preview === e.over!.id);
-      emitPending(arrayMove(pending, oldIndex, newIndex));
-    } else {
+    if (items.some(i => i.url === e.active.id)) {
       const oldIndex = items.findIndex(i => i.url === e.active.id);
       const newIndex = items.findIndex(i => i.url === e.over!.id);
-      onChange(arrayMove(items, oldIndex, newIndex));
+      if (newIndex >= 0) onChange(arrayMove(items, oldIndex, newIndex));
+    } else if (deferUpload) {
+      const oldIndex = pending.findIndex(p => p.preview === e.active.id);
+      const newIndex = pending.findIndex(p => p.preview === e.over!.id);
+      if (newIndex >= 0) emitPending(arrayMove(pending, oldIndex, newIndex));
     }
   }
 
-  const count = deferUpload ? pending.length : items.length;
-  const tileIds = deferUpload ? pending.map(p => p.preview) : items.map(i => i.url);
+  const count = items.length + (deferUpload ? pending.length : 0);
+  const tileIds = [...items.map(i => i.url), ...(deferUpload ? pending.map(p => p.preview) : [])];
 
   return (
     <div
@@ -95,24 +97,23 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={tileIds} strategy={horizontalListSortingStrategy}>
           <div className="flex flex-wrap gap-2">
-            {deferUpload
-              ? pending.map((p, i) => (
-                  <SortableTile
-                    key={p.preview}
-                    item={{ type: 'screenshot', url: p.preview }}
-                    onRemove={() => {
-                      URL.revokeObjectURL(p.preview);
-                      emitPending(pending.filter((_, j) => j !== i));
-                    }}
-                  />
-                ))
-              : items.map((item, i) => (
-                  <SortableTile
-                    key={item.url}
-                    item={item}
-                    onRemove={() => onChange(items.filter((_, j) => j !== i))}
-                  />
-                ))}
+            {items.map((item, i) => (
+              <SortableTile
+                key={item.url}
+                item={item}
+                onRemove={() => onChange(items.filter((_, j) => j !== i))}
+              />
+            ))}
+            {deferUpload && pending.map((p, i) => (
+              <SortableTile
+                key={p.preview}
+                item={{ type: 'screenshot', url: p.preview }}
+                onRemove={() => {
+                  URL.revokeObjectURL(p.preview);
+                  emitPending(pending.filter((_, j) => j !== i));
+                }}
+              />
+            ))}
             {count < max && !adding && (
               <button
                 type="button"
@@ -141,17 +142,12 @@ export function MediaGallery({ ownerType, ownerId, items, onChange, uploadFn, ma
                   setAdding(false);
                 }
               : undefined}
-            onChange={deferUpload
-              ? () => {}
-              : (url) => {
-                  if (url) {
-                    const isDuplicate = items.some(i => i.url === url);
-                    if (!isDuplicate) {
-                      onChange([...items, { type: 'screenshot', url }]);
-                    }
-                  }
-                  setAdding(false);
-                }}
+            onChange={(url) => {
+              if (url && !items.some(i => i.url === url)) {
+                onChange([...items, { type: 'screenshot', url }]);
+              }
+              setAdding(false);
+            }}
             label="Add screenshot"
           />
           <button type="button" onClick={() => setAdding(false)} className="text-xs mt-2 underline">Cancel</button>

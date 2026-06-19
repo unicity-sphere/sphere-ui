@@ -22,9 +22,6 @@ export interface MediaUploaderProps {
    * locally, render a blob-URL preview, and call onFileSelected(file). The
    * consumer is responsible for uploading later (e.g. after creating the
    * parent entity to get a real ownerId).
-   *
-   * In this mode the URL paste fallback is hidden — the parent entity does
-   * not yet exist, so an external URL can't be persisted to it anyway.
    */
   deferUpload?: boolean;
   onFileSelected?: (file: File | null) => void;
@@ -128,6 +125,9 @@ export function MediaUploader({
   const limit = MEDIA_LIMITS[kind];
   const [state, setState] = useState<State>({ phase: 'idle' });
   const [urlInput, setUrlInput] = useState(value && !value.startsWith('blob:') ? value : '');
+  // Source toggle — exactly one of "upload" (file) / "url" is active, so a file
+  // and a URL can never compete. Defaults to upload.
+  const [source, setSource] = useState<'upload' | 'url'>('upload');
   const previewRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLSpanElement | null>(null);
   // Some legacy project records have logoUrl pointing to placehold.co — treat
@@ -161,6 +161,9 @@ export function MediaUploader({
         });
         return;
       }
+
+      // A file was chosen → clear any pasted URL so the two sources stay exclusive.
+      setUrlInput('');
 
       // Auto-fit: center-crop to the kind's aspect ratio and downscale to its max
       // dimensions, so a near-miss image (e.g. a 1.17:1 logo, or an oversized
@@ -295,10 +298,38 @@ export function MediaUploader({
     if (deferUpload) onFileSelected?.(null);
   };
 
+  // Commit the URL field as the value, clearing any selected/uploaded file so the
+  // two sources stay mutually exclusive.
+  const commitUrl = () => {
+    const url = urlInput.trim();
+    onChange(url || null);
+    if (url) {
+      if (previewRef.current) {
+        URL.revokeObjectURL(previewRef.current);
+        previewRef.current = null;
+      }
+      setState({ phase: 'idle' });
+      if (deferUpload) onFileSelected?.(null);
+    }
+  };
+
+  const tabClass = (active: boolean) =>
+    `px-3 py-1 rounded-md transition-colors ${
+      active
+        ? 'bg-white dark:bg-white/10 text-neutral-900 dark:text-white shadow-sm'
+        : 'text-neutral-500 dark:text-white/45 hover:text-neutral-700 dark:hover:text-white/70'
+    }`;
+
   return (
     <div className="space-y-2">
       {label && <div className="text-sm text-neutral-700 dark:text-white/70">{label}</div>}
 
+      <div className="inline-flex gap-0.5 rounded-lg p-0.5 bg-neutral-100 dark:bg-white/5 text-xs w-fit">
+        <button type="button" onClick={() => setSource('upload')} className={tabClass(source === 'upload')}>Upload</button>
+        <button type="button" onClick={() => setSource('url')} className={tabClass(source === 'url')}>URL</button>
+      </div>
+
+      {source === 'upload' && (
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
@@ -404,21 +435,18 @@ export function MediaUploader({
           </>
         ) : null}
       </div>
+      )}
 
-      {!deferUpload && (
-        <>
-          <div className="text-xs text-neutral-500 dark:text-white/45">or paste URL:</div>
-          <Input
-            type="url"
-            placeholder="https://..."
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            // Empty input → onChange(null) so a manually-cleared URL actually
-            // saves as "no logo". Previously the `urlInput && …` guard short-
-            // circuited and the form kept the stale value.
-            onBlur={() => onChange(urlInput.trim() || null)}
-          />
-        </>
+      {source === 'url' && (
+        <Input
+          type="url"
+          placeholder="https://..."
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          // Commit on blur. commitUrl clears any selected file so exactly one
+          // source (Upload vs URL) is ever active.
+          onBlur={commitUrl}
+        />
       )}
     </div>
   );

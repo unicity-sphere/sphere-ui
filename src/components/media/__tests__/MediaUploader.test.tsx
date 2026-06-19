@@ -29,14 +29,18 @@ describe('<MediaUploader>', () => {
     expect(screen.getByText(/1 MB/i)).toBeInTheDocument();
   });
 
-  it('renders URL input as fallback', () => {
+  it('shows the URL input when the URL source tab is selected', () => {
     render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={() => {}} />);
+    // Defaults to the Upload tab — URL input is not shown until you switch.
+    expect(screen.queryByPlaceholderText(/https/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^url$/i }));
     expect(screen.getByPlaceholderText(/https/i)).toBeInTheDocument();
   });
 
   it('calls onChange when URL is pasted', () => {
     const onChange = vi.fn();
     render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /^url$/i }));
     fireEvent.change(screen.getByPlaceholderText(/https/i), { target: { value: 'https://external/x.png' } });
     fireEvent.blur(screen.getByPlaceholderText(/https/i));
     expect(onChange).toHaveBeenCalledWith('https://external/x.png');
