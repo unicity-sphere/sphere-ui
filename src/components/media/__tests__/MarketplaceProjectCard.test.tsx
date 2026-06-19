@@ -21,10 +21,11 @@ describe('<MarketplaceProjectCard>', () => {
     expect(banner.innerHTML).toContain('https://cdn/banner.png');
   });
 
-  it('falls back to placeholder URL when no logo', () => {
+  it('falls back to initials when no logo', () => {
     render(<MarketplaceProjectCard name="Sphere Demo" logoUrl={null} bannerUrl={null} />);
-    const img = screen.getByAltText('Sphere Demo') as HTMLImageElement;
-    expect(img.src).toContain('placehold.co');
+    // No logo → ProjectLogo renders the name's monogram, not an <img>.
+    expect(screen.getByText('SD')).toBeInTheDocument();
+    expect(screen.queryByAltText('Sphere Demo')).not.toBeInTheDocument();
   });
 
   it('renders rating and user count when provided', () => {
