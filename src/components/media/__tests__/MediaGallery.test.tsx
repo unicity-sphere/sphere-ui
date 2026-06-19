@@ -1,8 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MediaGallery } from '../MediaGallery.js';
 
 const noopUpload = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/x.png', assetId: 'ast_x' });
+
+// jsdom has no URL.createObjectURL / revokeObjectURL — stub for blob previews.
+const origCreate = URL.createObjectURL;
+const origRevoke = URL.revokeObjectURL;
+beforeAll(() => {
+  URL.createObjectURL = vi.fn().mockReturnValue('blob:shot') as unknown as typeof URL.createObjectURL;
+  URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+});
+afterAll(() => {
+  URL.createObjectURL = origCreate;
+  URL.revokeObjectURL = origRevoke;
+});
 
 describe('<MediaGallery>', () => {
   it('renders current items as thumbnails', () => {
@@ -47,5 +59,28 @@ describe('<MediaGallery>', () => {
     );
     fireEvent.click(screen.getAllByLabelText(/remove/i)[0]);
     expect(onChange).toHaveBeenCalledWith([{ type: 'screenshot', url: 'https://x/2.png' }]);
+  });
+
+  it('deferUpload: collects the File via onFilesChange without uploading', async () => {
+    const onFilesChange = vi.fn();
+    render(
+      <MediaGallery
+        ownerType="project"
+        ownerId="pending"
+        items={[]}
+        onChange={() => {}}
+        uploadFn={noopUpload}
+        deferUpload
+        onFilesChange={onFilesChange}
+      />,
+    );
+    // open the inline uploader, then choose a file
+    fireEvent.click(screen.getByLabelText(/add screenshot/i));
+    const file = new File([new Uint8Array(8)], 'shot.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [file] } });
+
+    // File is collected (not uploaded) and surfaced to the parent
+    await waitFor(() => expect(onFilesChange).toHaveBeenCalledWith([file]));
+    expect(noopUpload).not.toHaveBeenCalled();
   });
 });
