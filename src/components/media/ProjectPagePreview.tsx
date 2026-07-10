@@ -132,8 +132,10 @@ export function ProjectPagePreview({
 
         {/* Logo — outside overflow-hidden container.
             ProjectLogo gives a unified visual: real uploaded logo fills tile;
-            missing logo falls back to gradient + monogram + corner blik. */}
-        <div className="absolute -bottom-6 left-6 sm:left-8 z-10 rounded-2xl border-4 border-white dark:border-[#060606] shadow-xl overflow-hidden">
+            missing logo falls back to gradient + monogram + gloss.
+            No frame around the tile — mirrors the border-4 removal on the
+            dev-portal/backoffice overview pages. */}
+        <div className="absolute -bottom-6 left-6 sm:left-8 z-10">
           <ProjectLogo
             name={name}
             logoUrl={logoUrl}
@@ -155,14 +157,9 @@ export function ProjectPagePreview({
               {(category || tags.length > 0) && (
                 <div className="flex items-center gap-2 mt-3">
                   {category && (
-                    <span
-                      className="inline-flex px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider"
-                      style={{
-                        backgroundColor: `${accentColor}15`,
-                        color: accentColor,
-                        border: `1px solid ${accentColor}30`,
-                      }}
-                    >
+                    // Neutral chip on purpose — accent-tinted text turns
+                    // unreadable with dark/low-contrast project accent colors.
+                    <span className="inline-flex px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider bg-neutral-100 dark:bg-white/6 text-neutral-600 dark:text-white/60 border border-neutral-200 dark:border-white/10">
                       {categoryLabels[category] ?? category}
                     </span>
                   )}
@@ -348,7 +345,8 @@ export function ProjectPagePreview({
                     {ach.imageUrl ? (
                       <img src={ach.imageUrl} alt={ach.title} className="w-full h-full object-cover" />
                     ) : (
-                      <Trophy className="w-8 h-8" style={{ color: accentColor }} />
+                      // Fixed brand tint — project accentColor can be dark/invisible
+                      <Trophy className="w-8 h-8 text-orange-600 dark:text-brand-orange" />
                     )}
                   </div>
                   <h4 className="text-sm font-medium text-neutral-900 dark:text-white line-clamp-2">{ach.title}</h4>

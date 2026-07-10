@@ -99,13 +99,13 @@ export function MarketplaceProjectCard({
       <div className="p-4 bg-white dark:bg-white/4 dark:backdrop-blur-2xl">
         {/* Header */}
         <div className="flex items-start gap-3">
-          <div className="shrink-0 -mt-8 ring-2 ring-white dark:ring-[#0a0a0a] rounded-xl relative z-10">
+          {/* No ring/border around the tile — logo tiles are frameless everywhere */}
+          <div className="shrink-0 -mt-8 relative z-10">
             <ProjectLogo
               name={name}
               logoUrl={logoUrl}
               accentColor={accentColor}
               size="md"
-              className="border border-neutral-200 dark:border-white/10"
             />
           </div>
           <div className="min-w-0 flex-1">
@@ -117,11 +117,9 @@ export function MarketplaceProjectCard({
         {/* Category + Stats — fixed layout */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100 dark:border-white/5">
           {category ? (
-            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border" style={{
-              backgroundColor: `${accentColor}15`,
-              color: accentColor,
-              borderColor: `${accentColor}30`,
-            }}>
+            // Neutral chip on purpose — accent-tinted text turns unreadable
+            // with dark/low-contrast project accent colors.
+            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-neutral-100 dark:bg-white/6 text-neutral-600 dark:text-white/60 border border-neutral-200 dark:border-white/10">
               {categoryLabels[category] ?? category}
             </span>
           ) : <span />}
