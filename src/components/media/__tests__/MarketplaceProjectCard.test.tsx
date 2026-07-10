@@ -33,4 +33,28 @@ describe('<MarketplaceProjectCard>', () => {
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('80%')).toBeInTheDocument();
   });
+
+  it('renders the logo tile frameless (no ring or border wrapper)', () => {
+    render(<MarketplaceProjectCard name="X" logoUrl="https://cdn/logo.png" bannerUrl={null} />);
+    const tile = screen.getByAltText('X').parentElement!;
+    const wrapper = tile.parentElement!;
+    expect(tile.className).not.toMatch(/border/);
+    expect(wrapper.className).not.toMatch(/ring-|border/);
+  });
+
+  it('renders the category chip neutral, never accent-tinted', () => {
+    render(
+      <MarketplaceProjectCard
+        name="X"
+        logoUrl={null}
+        bannerUrl={null}
+        category="game"
+        accentColor="#000000"
+      />,
+    );
+    const chip = screen.getByText('Game');
+    // No inline style — chip must stay readable regardless of project accentColor
+    expect(chip.getAttribute('style')).toBeNull();
+    expect(chip.className).toContain('text-neutral-600');
+  });
 });

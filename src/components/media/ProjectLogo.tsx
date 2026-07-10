@@ -15,10 +15,12 @@ export interface ProjectLogoProps {
   children?: ReactNode;
 }
 
+// Corner radius is exactly 25% of the tile edge so every size reads as the
+// same squircle — a fixed radius makes smaller tiles look near-circular.
 const SIZE_CLASSES: Record<ProjectLogoSize, string> = {
-  sm: 'w-9 h-9 rounded-xl',
-  md: 'w-11 h-11 rounded-xl',
-  lg: 'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl',
+  sm: 'w-9 h-9 rounded-[9px]',
+  md: 'w-11 h-11 rounded-[11px]',
+  lg: 'w-14 h-14 sm:w-16 sm:h-16 rounded-[14px] sm:rounded-2xl',
 };
 
 const FALLBACK_TEXT_CLASSES: Record<ProjectLogoSize, string> = {
@@ -55,8 +57,9 @@ function isPlaceholderUrl(url: string): boolean {
 }
 
 /**
- * ProjectLogo — the canonical "app icon" visual: gradient tile +
- * mesh overlay + corner accent + edge-to-edge logo image. Pure
+ * ProjectLogo — the canonical "app icon" visual: accent-gradient tile +
+ * un-cropped logo image; when no logo is available, a 2-letter monogram
+ * with a gloss stack (mesh + lighting + corner blik) instead. Pure
  * presentation, no behavior — wrap it in a button/link if interactive.
  *
  * Used everywhere a project logo appears (desktop dock, marketplace
@@ -75,48 +78,57 @@ export function ProjectLogo({
   const isReal = !!logoUrl && !isPlaceholderUrl(logoUrl);
   const showImage = isReal && !imgError;
 
-  // Match DesktopIcon's vivid two-tone gradient (`from-X-500 to-Y-500`)
-  // by mixing accent with white at the bottom-right stop — accent stays
-  // saturated at top-left, gets lighter towards bottom-right, mirroring
-  // the blue→cyan / indigo→violet of built-in icons.
-  const tileBackground =
-    `linear-gradient(to bottom right, ${accentColor}, color-mix(in srgb, ${accentColor} 60%, white))`;
+  // Real logo → flat accent fill: the white-mixed gradient belongs to the
+  // glossy monogram fallback only. With dark accents (#000000) the lightened
+  // stop leaks around image edges / letterbox as white fringes.
+  // Fallback → match DesktopIcon's vivid two-tone gradient (`from-X-500 to-Y-500`)
+  // by mixing accent with white at the bottom-right stop.
+  const tileBackground = showImage
+    ? accentColor
+    : `linear-gradient(to bottom right, ${accentColor}, color-mix(in srgb, ${accentColor} 60%, white))`;
 
   return (
     <div
-      className={`relative ${SIZE_CLASSES[size]} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200 overflow-hidden${className ? ' ' + className : ''}`}
+      className={`relative shrink-0 ${SIZE_CLASSES[size]} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200 overflow-hidden${className ? ' ' + className : ''}`}
       style={{ background: tileBackground }}
     >
-      {/* Mesh overlay — soft directional highlights (matches DesktopIcon 1:1) */}
-      <div
-        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none"
-        style={{
-          backgroundImage:
-            'radial-gradient(at 27% 37%, rgba(255,255,255,0.15) 0px, transparent 50%),' +
-            'radial-gradient(at 97% 21%, rgba(255,255,255,0.10) 0px, transparent 50%)',
-        }}
-      />
-      {/* Top-half soft lighting — works across any accentColor including
-          warm/bright orange/yellow tones where a single white/10 corner blik
-          (DesktopIcon's pattern) blends in. Gives the tile an iOS-style
-          "lit from above" feel. */}
-      <div className="absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/25 to-transparent pointer-events-none" />
-      {/* Sharp corner blik — concentrated highlight in the top-right, same
-          shape as DesktopIcon's. Sits UNDER the logo image so a real square
-          logo covers it (no random gloss on photo logos). */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/30 rounded-bl-full pointer-events-none" />
-
       {showImage ? (
+        // Real logo: accent tile + un-cropped logo, nothing else. object-contain
+        // keeps square icons edge-to-edge while non-square ones letterbox over
+        // the accent gradient instead of being cropped. Transparent logos show
+        // the accent fill through, so no gloss may sit under the image either.
         <img
           src={logoUrl ?? undefined}
           alt={name}
           onError={() => setImgError(true)}
-          className="absolute inset-0 w-full h-full object-cover z-10"
+          className="absolute inset-0 w-full h-full object-contain z-10"
         />
       ) : (
-        <span className={`text-white font-bold relative z-10 tracking-tight drop-shadow-sm ${FALLBACK_TEXT_CLASSES[size]}`}>
-          {getInitials(name)}
-        </span>
+        <>
+          {/* Gloss stack — fallback monogram only */}
+          <div data-testid="logo-gloss" className="absolute inset-0 pointer-events-none">
+            {/* Mesh overlay — soft directional highlights (matches DesktopIcon 1:1) */}
+            <div
+              className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500"
+              style={{
+                backgroundImage:
+                  'radial-gradient(at 27% 37%, rgba(255,255,255,0.15) 0px, transparent 50%),' +
+                  'radial-gradient(at 97% 21%, rgba(255,255,255,0.10) 0px, transparent 50%)',
+              }}
+            />
+            {/* Top-half soft lighting — works across any accentColor including
+                warm/bright orange/yellow tones where a single white/10 corner blik
+                (DesktopIcon's pattern) blends in. Gives the tile an iOS-style
+                "lit from above" feel. */}
+            <div className="absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/25 to-transparent" />
+            {/* Sharp corner blik — concentrated highlight in the top-right, same
+                shape as DesktopIcon's. */}
+            <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/30 rounded-bl-full" />
+          </div>
+          <span className={`text-white font-bold relative z-10 tracking-tight drop-shadow-sm ${FALLBACK_TEXT_CLASSES[size]}`}>
+            {getInitials(name)}
+          </span>
+        </>
       )}
 
       {children}

@@ -56,8 +56,9 @@ export function FeaturedProjectCard({
           : `linear-gradient(135deg, ${accentColor}cc 0%, ${accentColor}44 100%)`,
       }} />
 
-      {/* Gradient overlay from bottom */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      {/* Gradient overlay from bottom — strong enough that the card's own
+          name/tagline/stats stay readable over typographic banner images */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
       {/* Featured badge */}
       <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider">
@@ -73,7 +74,6 @@ export function FeaturedProjectCard({
             logoUrl={logoUrl}
             accentColor={accentColor}
             size="sm"
-            className="border-2 border-white/20"
           />
           <div className="min-w-0">
             <h3 className="font-semibold text-white text-sm truncate">{name}</h3>

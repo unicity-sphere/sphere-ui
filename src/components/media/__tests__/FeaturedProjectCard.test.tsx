@@ -19,4 +19,11 @@ describe('<FeaturedProjectCard>', () => {
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
   });
+
+  it('renders the logo tile square and frameless', () => {
+    render(<FeaturedProjectCard name="X" logoUrl="https://cdn/logo.svg" bannerUrl={null} />);
+    const tile = screen.getByAltText('X').parentElement!;
+    expect(tile.className).toContain('shrink-0');
+    expect(tile.className).not.toContain('border-2');
+  });
 });
