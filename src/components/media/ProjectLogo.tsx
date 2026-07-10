@@ -15,12 +15,12 @@ export interface ProjectLogoProps {
   children?: ReactNode;
 }
 
-// Corner radius scales with tile size (~25% of the edge) so every size reads
-// as the same squircle — a fixed radius makes small tiles look near-circular.
+// Corner radius is exactly 25% of the tile edge so every size reads as the
+// same squircle — a fixed radius makes smaller tiles look near-circular.
 const SIZE_CLASSES: Record<ProjectLogoSize, string> = {
   sm: 'w-9 h-9 rounded-[9px]',
-  md: 'w-11 h-11 rounded-xl',
-  lg: 'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl',
+  md: 'w-11 h-11 rounded-[11px]',
+  lg: 'w-14 h-14 sm:w-16 sm:h-16 rounded-[14px] sm:rounded-2xl',
 };
 
 const FALLBACK_TEXT_CLASSES: Record<ProjectLogoSize, string> = {
