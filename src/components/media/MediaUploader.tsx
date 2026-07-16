@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   MEDIA_LIMITS,
+  MAX_SOURCE_SIZE,
   isMimeAllowed,
   isSizeAllowed,
+  isSourceSizeAllowed,
+  sourceSizeLimit,
   humanSize,
 } from './media-limits.js';
 import type { MediaKind, MediaUploadFn, MediaLimit } from './types.js';
@@ -222,6 +225,22 @@ export function MediaUploader({
         }
       }
 
+      // Post-bake byte guard — the bake can GROW a file (an indexed/optimised
+      // PNG re-encodes as unoptimised full-colour PNG; a low-quality JPEG is
+      // requantised at q0.92), and the BAKED artifact is what the server holds
+      // to maxSize at presign. Catching it here keeps the failure inside the
+      // picker: under deferUpload the parent entity is created before the
+      // upload, so a late server 413 would leave a committed record with no
+      // image. fitImage returns SVG and no-canvas cases untouched, so the same
+      // check covers those paths too.
+      if (!isSizeAllowed(kind, fitted.size)) {
+        setState({
+          phase: 'error',
+          message: `Image is too large after processing (max ${humanSize(limit.maxSize)})`,
+        });
+        return;
+      }
+
       // Defer mode: store the file, show preview, notify parent. No upload yet.
       if (deferUpload) {
         if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -270,10 +289,15 @@ export function MediaUploader({
         });
         return;
       }
-      if (!isSizeAllowed(kind, file.size)) {
+      // Source cap: bounds local read/decode cost only. The real per-kind byte
+      // limit (maxSize) is enforced on the BAKED file in finishFile — a large
+      // source is exactly what the crop/downscale bake exists to rescue, so
+      // rejecting it here would lock camera exports out of the crop editor.
+      // For SVG the source is the artifact, so the cap tightens to maxSize.
+      if (!isSourceSizeAllowed(kind, file.type, file.size)) {
         setState({
           phase: 'error',
-          message: `File too large (max ${humanSize(limit.maxSize)})`,
+          message: `File too large (max ${humanSize(sourceSizeLimit(kind, file.type))})`,
         });
         return;
       }
@@ -307,7 +331,10 @@ export function MediaUploader({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: Object.fromEntries(limit.mimes.map((m) => [m, []])),
-    maxSize: limit.maxSize,
+    // Loose source cap only — the per-kind maxSize is enforced on the baked
+    // file in finishFile. SVG's tighter source rule runs in handleFile, since
+    // dropzone has a single maxSize for all mimes.
+    maxSize: MAX_SOURCE_SIZE,
     multiple: false,
     onDropAccepted: (files) => {
       if (files[0]) void handleFile(files[0]);
@@ -317,7 +344,7 @@ export function MediaUploader({
       if (firstError?.code === 'file-too-large') {
         setState({
           phase: 'error',
-          message: `File too large (max ${humanSize(limit.maxSize)})`,
+          message: `File too large (max ${humanSize(MAX_SOURCE_SIZE)})`,
         });
       } else if (firstError?.code === 'file-invalid-type') {
         setState({
@@ -487,9 +514,12 @@ export function MediaUploader({
         ) : state.phase === 'idle' ? (
           <>
             <div className="text-sm mb-1">Drop image here or click to choose</div>
+            {/* maxSize describes the STORED file; large sources are downscaled
+                to fit, so don't advertise it as a picking constraint. */}
             <div className="text-xs text-neutral-500 dark:text-white/45">
               {formatExtensions(limit.mimes)} · max {humanSize(limit.maxSize)}
               {limit.maxWidth && limit.maxHeight && ` · ${limit.maxWidth}×${limit.maxHeight}`}
+              {' · large images are resized to fit'}
             </div>
           </>
         ) : state.phase === 'uploading' ? (
