@@ -80,11 +80,26 @@ describe('<MediaUploader> banner crop editor', () => {
 });
 
 describe('<MediaUploader>', () => {
-  it('renders idle state with format/size hint', () => {
-    render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={() => {}} />);
+  it('describes the picker honestly: formats + output size, no stored-size cap', () => {
+    // maxSize governs the STORED file, which the author neither picks nor can
+    // influence — showing it as a picking constraint reads as "files over 3MB
+    // are rejected", which is exactly what stopped being true.
+    render(<MediaUploader kind="banner" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={() => {}} />);
     expect(screen.getByText(/Drop image here/i)).toBeInTheDocument();
-    expect(screen.getByText(/PNG/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 MB/i)).toBeInTheDocument();
+    const hint = screen.getByText(/PNG, JPEG, WEBP/);
+    expect(hint.textContent).toContain('resized to fit 1920×640');
+    expect(hint.textContent).not.toMatch(/max 3 MB/i);
+  });
+
+  it('still states the SVG cap where it genuinely applies to the picked file', () => {
+    // SVG is never re-encoded, so for SVG the source IS the artifact and the
+    // strict cap really does reject at pick time — say so, and only for SVG.
+    render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={() => {}} />);
+    const hint = screen.getByText(/PNG, JPEG, WEBP/);
+    expect(hint.textContent).toContain('SVG max 1 MB');
+    expect(hint.textContent).toContain('resized to fit 1024×1024');
+    // The mime tail is an implementation detail — render "SVG", not "SVG+XML".
+    expect(hint.textContent).not.toContain('SVG+XML');
   });
 
   it('shows the URL input when the URL source tab is selected', () => {
