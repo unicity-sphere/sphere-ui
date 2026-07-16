@@ -21,6 +21,64 @@ afterAll(() => {
   URL.revokeObjectURL = originalRevoke;
 });
 
+/**
+ * Make the environment look crop-capable: MediaUploader gates the editor on a
+ * REAL canvas probe (getContext('2d') != null), which jsdom fails by design.
+ * Returns a restore fn.
+ */
+function stubCropCapableEnv(width = 1920, height = 640): () => void {
+  const prevBitmap = globalThis.createImageBitmap;
+  const prevGetContext = HTMLCanvasElement.prototype.getContext;
+  globalThis.createImageBitmap = vi
+    .fn()
+    .mockResolvedValue({ width, height, close: vi.fn() }) as unknown as typeof createImageBitmap;
+  HTMLCanvasElement.prototype.getContext = vi
+    .fn()
+    .mockReturnValue({ drawImage: vi.fn() }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+  return () => {
+    globalThis.createImageBitmap = prevBitmap;
+    HTMLCanvasElement.prototype.getContext = prevGetContext;
+  };
+}
+
+describe('<MediaUploader> banner crop editor', () => {
+  it('offers the frame editor for a banner before anything is uploaded', async () => {
+    const restore = stubCropCapableEnv();
+    try {
+      const uploadFn = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/b.png', assetId: 'ast_b' });
+      render(<MediaUploader kind="banner" ownerType="project" ownerId="65f0" uploadFn={uploadFn} onChange={vi.fn()} />);
+      const file = new File([new Uint8Array(8)], 'b.png', { type: 'image/png' });
+      fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [file] } });
+
+      expect(await screen.findByRole('button', { name: 'Apply' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Zoom')).toBeInTheDocument();
+      // The author frames it first — nothing is sent until they commit.
+      expect(uploadFn).not.toHaveBeenCalled();
+    } finally {
+      restore();
+    }
+  });
+
+  it('does not offer the frame editor for a logo', async () => {
+    // 512x512 is already within the logo limit and already 1:1, so fitImage is
+    // a no-op and the upload proceeds straight through.
+    const restore = stubCropCapableEnv(512, 512);
+    try {
+      const uploadFn = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/l.png', assetId: 'ast_l' });
+      render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={uploadFn} onChange={vi.fn()} />);
+      const file = new File([new Uint8Array(8)], 'l.png', { type: 'image/png' });
+      fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [file] } });
+
+      // Logos render object-contain everywhere, so their framing is not an
+      // authoring decision — the implicit centre crop only fixes a near-miss ratio.
+      await vi.waitFor(() => expect(uploadFn).toHaveBeenCalled());
+      expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
+    } finally {
+      restore();
+    }
+  });
+});
+
 describe('<MediaUploader>', () => {
   it('renders idle state with format/size hint', () => {
     render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={() => {}} />);

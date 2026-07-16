@@ -35,6 +35,19 @@ describe('<ProjectPagePreview>', () => {
     expect(img).toHaveAttribute('src', 'https://img.youtube.com/vi/abc123/hqdefault.jpg');
   });
 
+  it('pins the banner box to 3:1 and caps its width', () => {
+    render(<ProjectPagePreview name="X" slug="x" bannerUrl="https://cdn/banner.png" />);
+    const box = screen.getByTestId('banner').parentElement!;
+    expect(box.className).toContain('aspect-[3/1]');
+    expect(box.className).not.toMatch(/\bh-48\b|\bsm:h-64\b/);
+    // Height is bounded via max-width on the wrapper, never max-height on the
+    // box: max-height clamps after the ratio resolves and would float AR_box
+    // again, restoring the very bug this fixes. max-w-5xl + mx-auto is the same
+    // container every other section uses, so the banner lines up with them.
+    expect(box.parentElement!.className).toContain('max-w-5xl');
+    expect(box.parentElement!.className).toContain('mx-auto');
+  });
+
   it('renders first 3 tags when provided', () => {
     render(<ProjectPagePreview name="X" slug="x" tags={['pvp', 'arena', 'rpg', 'multiplayer']} />);
     expect(screen.getByText(/pvp/i)).toBeInTheDocument();

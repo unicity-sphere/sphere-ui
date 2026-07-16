@@ -64,8 +64,12 @@ export function MarketplaceProjectCard({
       whileHover={{ y: -4 }}
       className="no-text-shadow group rounded-2xl border border-neutral-200 dark:border-white/8 hover:border-orange-500/60 dark:hover:border-brand-orange/60 hover:shadow-lg hover:shadow-orange-500/10 dark:hover:shadow-brand-orange/15 transition-all duration-200 cursor-pointer relative overflow-hidden"
     >
-      {/* Banner background — fixed height for uniform card size */}
-      <div className="relative h-24 overflow-hidden" data-testid="banner">
+      {/* Banner background — ratio is pinned (never a fixed height) so the crop
+          is identical on every screen: under `cover` the visible crop depends
+          only on AR_box / AR_image. 3:1 matches MEDIA_LIMITS.banner, so a
+          correctly authored banner crops to zero. Cards stay uniform because
+          the grid column width is uniform. */}
+      <div className="relative aspect-[3/1] overflow-hidden" data-testid="banner">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
           style={{

@@ -42,6 +42,16 @@ describe('<MarketplaceProjectCard>', () => {
     expect(wrapper.className).not.toMatch(/ring-|border/);
   });
 
+  it('pins the banner box to a fixed 3:1 ratio, not a fixed height', () => {
+    render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl="https://cdn/banner.png" />);
+    const banner = screen.getByTestId('banner');
+    // A fixed height with a fluid width makes AR_box track the viewport, so the
+    // same banner crops differently on a laptop and a 2K monitor. Pinning the
+    // ratio is what makes the crop viewport-independent.
+    expect(banner.className).toContain('aspect-[3/1]');
+    expect(banner.className).not.toMatch(/\bh-24\b/);
+  });
+
   it('renders the category chip neutral, never accent-tinted', () => {
     render(
       <MarketplaceProjectCard
