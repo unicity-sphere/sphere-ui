@@ -8,6 +8,8 @@ import {
 } from './media-limits.js';
 import type { MediaKind, MediaUploadFn, MediaLimit } from './types.js';
 import { Input } from '../Input.js';
+import { BannerCropEditor } from './BannerCropEditor.js';
+import type { CropRect } from './crop-rect.js';
 
 export interface MediaUploaderProps {
   kind: MediaKind;
@@ -29,6 +31,7 @@ export interface MediaUploaderProps {
 
 type State =
   | { phase: 'idle' }
+  | { phase: 'cropping'; file: File; previewUrl: string; rect: CropRect | null }
   | { phase: 'uploading'; file: File; progress: number; abort: AbortController }
   | { phase: 'pending';   file: File }
   | { phase: 'done' }
@@ -57,13 +60,33 @@ async function readImageSize(file: File): Promise<{ width: number; height: numbe
 }
 
 /**
- * Fit an image to a kind's constraints: center-crop to `aspectRatio` (if set),
- * then downscale to fit `maxWidth`/`maxHeight`, re-encoding via canvas. Returns a
- * NEW File. Returns the original unchanged for SVG, when nothing needs changing,
- * or when canvas/createImageBitmap is unavailable (older browsers, jsdom) — so the
- * caller's fallback dimension check still applies in those cases.
+ * Whether this environment can actually bake a crop. `createImageBitmap` being
+ * defined is NOT enough — jsdom defines it while returning null from
+ * getContext('2d'), and some hardened browsers do the same. Probe the thing we
+ * really need, or we would show a crop editor for a file we cannot crop and
+ * only reject it after the author had framed it.
  */
-async function fitImage(file: File, limit: MediaLimit): Promise<File> {
+function canBakeCrop(): boolean {
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return false;
+  try {
+    return document.createElement('canvas').getContext('2d') != null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fit an image to a kind's constraints: crop (to `rect` when the author chose
+ * one, else a centre crop to `aspectRatio`), then downscale to fit
+ * `maxWidth`/`maxHeight`, re-encoding via canvas. Returns a NEW File. Returns
+ * the original unchanged for SVG, when nothing needs changing, or when
+ * canvas/createImageBitmap is unavailable (older browsers, jsdom) — so the
+ * caller's fallback dimension check still applies in those cases.
+ *
+ * `rect` is in fractions of the source's natural size. Without it the behaviour
+ * is exactly as before, which is what keeps every non-banner kind untouched.
+ */
+async function fitImage(file: File, limit: MediaLimit, rect?: CropRect): Promise<File> {
   if (file.type === 'image/svg+xml') return file;
   if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
   try {
@@ -71,9 +94,15 @@ async function fitImage(file: File, limit: MediaLimit): Promise<File> {
     const sw = bitmap.width;
     const sh = bitmap.height;
 
-    // Center-crop to honour aspectRatio (width / height).
+    // Crop region: the author's rect when supplied, else a centre crop to
+    // aspectRatio. Fractions convert to source pixels here and nowhere else.
     let cropW = sw, cropH = sh, cropX = 0, cropY = 0;
-    if (limit.aspectRatio) {
+    if (rect) {
+      cropX = Math.round(rect.x * sw);
+      cropY = Math.round(rect.y * sh);
+      cropW = Math.max(1, Math.round(rect.width * sw));
+      cropH = Math.max(1, Math.round(rect.height * sh));
+    } else if (limit.aspectRatio) {
       if (sw / sh > limit.aspectRatio) {
         cropW = Math.round(sh * limit.aspectRatio);
         cropX = Math.round((sw - cropW) / 2);
@@ -86,10 +115,17 @@ async function fitImage(file: File, limit: MediaLimit): Promise<File> {
     // Downscale the cropped region to fit max dimensions (never upscale).
     const scale = Math.min(1, (limit.maxWidth ?? cropW) / cropW, (limit.maxHeight ?? cropH) / cropH);
     const outW = Math.max(1, Math.round(cropW * scale));
-    const outH = Math.max(1, Math.round(cropH * scale));
+    // Rounding width and height independently lets the output ratio drift — a
+    // 3:1 crop can land on 1920x639 (3.005:1), which then reads as a permanent
+    // sliver crop against a pinned 3:1 box, forever and invisibly. Derive the
+    // height from the target ratio instead.
+    const outH = limit.aspectRatio
+      ? Math.max(1, Math.round(outW / limit.aspectRatio))
+      : Math.max(1, Math.round(cropH * scale));
 
-    // Nothing to crop or scale → keep original bytes (avoid a needless re-encode).
-    if (cropX === 0 && cropY === 0 && cropW === sw && cropH === sh && scale === 1) {
+    // Nothing to crop, scale or re-ratio → keep original bytes (avoid a needless
+    // re-encode).
+    if (cropX === 0 && cropY === 0 && cropW === sw && cropH === sh && outW === sw && outH === sh) {
       bitmap.close?.();
       return file;
     }
@@ -145,31 +181,18 @@ export function MediaUploader({
     [],
   );
 
-  const handleFile = useCallback(
-    async (file: File) => {
-      if (!isMimeAllowed(kind, file.type)) {
-        setState({
-          phase: 'error',
-          message: `Format not supported (${formatExtensions(limit.mimes)} only)`,
-        });
-        return;
-      }
-      if (!isSizeAllowed(kind, file.size)) {
-        setState({
-          phase: 'error',
-          message: `File too large (max ${humanSize(limit.maxSize)})`,
-        });
-        return;
-      }
-
-      // A file was chosen → clear any pasted URL so the two sources stay exclusive.
-      setUrlInput('');
-
-      // Auto-fit: center-crop to the kind's aspect ratio and downscale to its max
-      // dimensions, so a near-miss image (e.g. a 1.17:1 logo, or an oversized
-      // banner) is fixed and uploaded instead of rejected. No-op for SVG and when
-      // canvas is unavailable (older browsers, jsdom).
-      const fitted = await fitImage(file, limit);
+  /**
+   * Everything after the crop decision: fit, guard, then either defer or upload.
+   * Shared by the direct path and the crop editor so the two cannot drift.
+   */
+  const finishFile = useCallback(
+    async (file: File, rect?: CropRect) => {
+      // Auto-fit: crop to the author's rect (banners) or centre-crop to the
+      // kind's aspect ratio, then downscale to its max dimensions, so a
+      // near-miss image (e.g. a 1.17:1 logo, or an oversized banner) is fixed
+      // and uploaded instead of rejected. No-op for SVG and when canvas is
+      // unavailable (older browsers, jsdom).
+      const fitted = await fitImage(file, limit, rect);
 
       // Fallback guard: if fitImage could not process (no canvas), reject an
       // out-of-spec image so the server does not 422. After a successful fit this
@@ -236,6 +259,50 @@ export function MediaUploader({
       }
     },
     [kind, ownerType, ownerId, uploadFn, onChange, limit, deferUpload, onFileSelected],
+  );
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      if (!isMimeAllowed(kind, file.type)) {
+        setState({
+          phase: 'error',
+          message: `Format not supported (${formatExtensions(limit.mimes)} only)`,
+        });
+        return;
+      }
+      if (!isSizeAllowed(kind, file.size)) {
+        setState({
+          phase: 'error',
+          message: `File too large (max ${humanSize(limit.maxSize)})`,
+        });
+        return;
+      }
+
+      // A file was chosen → clear any pasted URL so the two sources stay exclusive.
+      setUrlInput('');
+
+      // Banners are the one kind whose framing is an authoring decision: every
+      // surface renders them at a pinned 3:1, so whatever the centre crop threw
+      // away is gone everywhere. Let the author choose it instead.
+      //
+      // Other kinds keep the implicit centre crop — for a logo it only fixes a
+      // near-miss ratio, and ProjectLogo renders object-contain, so nothing is
+      // ever cut at render time. SVG has no raster crop, and without a working
+      // canvas there is nothing to bake, so fall through to the guard that
+      // rejects an out-of-spec file instead of framing one we cannot produce.
+      const canCrop =
+        kind === 'banner' && file.type !== 'image/svg+xml' && canBakeCrop();
+
+      if (canCrop) {
+        if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+        previewRef.current = URL.createObjectURL(file);
+        setState({ phase: 'cropping', file, previewUrl: previewRef.current, rect: null });
+        return;
+      }
+
+      await finishFile(file);
+    },
+    [kind, limit, finishFile],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -329,7 +396,41 @@ export function MediaUploader({
         <button type="button" onClick={() => setSource('url')} className={tabClass(source === 'url')}>URL</button>
       </div>
 
-      {source === 'upload' && (
+      {source === 'upload' && state.phase === 'cropping' && (
+        <div className="space-y-3 border border-neutral-200 dark:border-white/8 rounded-lg p-3">
+          <BannerCropEditor
+            src={state.previewUrl}
+            aspect={limit.aspectRatio ?? 3}
+            onCropChange={(rect) =>
+              setState((s) => (s.phase === 'cropping' ? { ...s, rect } : s))
+            }
+          />
+          <div className="flex gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => { void finishFile(state.file, state.rect ?? undefined); }}
+              className="px-3 py-1.5 rounded-md bg-orange-500 dark:bg-brand-orange text-white font-medium"
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (previewRef.current) {
+                  URL.revokeObjectURL(previewRef.current);
+                  previewRef.current = null;
+                }
+                setState({ phase: 'idle' });
+              }}
+              className="px-3 py-1.5 rounded-md text-neutral-500 dark:text-white/45 underline-offset-2 hover:underline ml-auto"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {source === 'upload' && state.phase !== 'cropping' && (
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors min-h-[128px] flex flex-col items-center justify-center ${
@@ -438,15 +539,28 @@ export function MediaUploader({
       )}
 
       {source === 'url' && (
-        <Input
-          type="url"
-          placeholder="https://..."
-          value={urlInput}
-          onChange={(e) => setUrlInput(e.target.value)}
-          // Commit on blur. commitUrl clears any selected file so exactly one
-          // source (Upload vs URL) is ever active.
-          onBlur={commitUrl}
-        />
+        <>
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            // Commit on blur. commitUrl clears any selected file so exactly one
+            // source (Upload vs URL) is ever active.
+            onBlur={commitUrl}
+          />
+          {kind === 'banner' && (
+            // No crop editor here on purpose: a linked image is cross-origin,
+            // drawing it into a canvas clears the origin-clean flag and the
+            // toBlob() that bakes the crop throws SecurityError. Setting
+            // crossOrigin="anonymous" would not degrade gracefully either — a
+            // host without Access-Control-Allow-Origin would fail the load
+            // outright, breaking images that render fine today.
+            <div className="text-[10px] text-neutral-500 dark:text-white/45">
+              Crop is available for uploaded files. Linked images are centred automatically.
+            </div>
+          )}
+        </>
       )}
     </div>
   );

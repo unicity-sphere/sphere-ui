@@ -1,4 +1,6 @@
 export { MediaUploader, type MediaUploaderProps } from './MediaUploader.js';
+export { BannerCropEditor, type BannerCropEditorProps } from './BannerCropEditor.js';
+export { centreRect, type CropRect } from './crop-rect.js';
 export { MediaGallery, type MediaGalleryProps, type MediaItem } from './MediaGallery.js';
 export { MarketplaceProjectCard, type MarketplaceProjectCardProps } from './MarketplaceProjectCard.js';
 export { FeaturedProjectCard, type FeaturedProjectCardProps } from './FeaturedProjectCard.js';
