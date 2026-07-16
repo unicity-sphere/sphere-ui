@@ -110,9 +110,14 @@ export function ProjectPagePreview({
       animate={{ opacity: 1 }}
       className="text-neutral-900 dark:text-white pb-12"
     >
-      {/* Banner */}
-      <div className="relative mx-4 sm:mx-6 mt-2">
-        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden">
+      {/* Banner — geometry must stay identical to sphere's ProjectPage hero, or
+          this preview lies about the crop the author will actually get: same
+          px-4/max-w-5xl/mx-auto container, same pinned 3:1 box. The width bound
+          must come from max-width, never from max-height on the ratio box — a
+          max-height clamps after the ratio resolves and would float AR_box again. */}
+      <section className="px-4 sm:px-6 mt-2">
+      <div className="relative max-w-5xl mx-auto">
+        <div className="relative aspect-[3/1] rounded-2xl overflow-hidden">
           <div
             className="absolute inset-0 bg-cover bg-center"
             data-testid="banner"
@@ -144,6 +149,7 @@ export function ProjectPagePreview({
           />
         </div>
       </div>
+      </section>
 
       {/* Info Header + Stats card */}
       <section className="px-4 sm:px-6 pt-10 pb-6">
