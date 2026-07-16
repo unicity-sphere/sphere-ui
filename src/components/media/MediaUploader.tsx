@@ -41,7 +41,11 @@ type State =
   | { phase: 'error'; message: string };
 
 function formatExtensions(mimes: readonly string[]): string {
-  return mimes.map((m) => m.split('/')[1]!.toUpperCase()).join(', ');
+  // The mime subtype is an implementation detail — "svg+xml" reads as noise,
+  // authors know the format as SVG.
+  return mimes
+    .map((m) => (m === 'image/svg+xml' ? 'SVG' : m.split('/')[1]!.toUpperCase()))
+    .join(', ');
 }
 
 /**
@@ -514,12 +518,16 @@ export function MediaUploader({
         ) : state.phase === 'idle' ? (
           <>
             <div className="text-sm mb-1">Drop image here or click to choose</div>
-            {/* maxSize describes the STORED file; large sources are downscaled
-                to fit, so don't advertise it as a picking constraint. */}
+            {/* No stored-size cap here: maxSize governs the BAKED file, which
+                the author neither picks nor can influence — advertising it
+                reads as "files over 3MB are rejected", which stopped being
+                true. The one cap that does apply at pick time is SVG's (never
+                re-encoded, so the source is the artifact) — state it, and only
+                for kinds that accept SVG. */}
             <div className="text-xs text-neutral-500 dark:text-white/45">
-              {formatExtensions(limit.mimes)} · max {humanSize(limit.maxSize)}
-              {limit.maxWidth && limit.maxHeight && ` · ${limit.maxWidth}×${limit.maxHeight}`}
-              {' · large images are resized to fit'}
+              {formatExtensions(limit.mimes)}
+              {limit.maxWidth && limit.maxHeight && ` · resized to fit ${limit.maxWidth}×${limit.maxHeight}`}
+              {limit.mimes.includes('image/svg+xml') && ` · SVG max ${humanSize(limit.maxSize)}`}
             </div>
           </>
         ) : state.phase === 'uploading' ? (
