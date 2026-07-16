@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MediaUploader } from '../MediaUploader.js';
 
 const noopUpload = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/x.png', assetId: 'ast_x' });
@@ -111,14 +111,86 @@ describe('<MediaUploader>', () => {
     expect(preview.src).toContain('https://cdn/exist.png');
   });
 
-  it('rejects file over size limit (client-side)', async () => {
+  it('rejects a file whose BAKED size exceeds the limit, after the bake', async () => {
+    // 2MB logo: passes the loose source cap (the bake normally shrinks it),
+    // but in jsdom fitImage no-ops, so the "baked" file is the original 2MB —
+    // over the 1MB logo maxSize. The post-bake guard must catch it: this is
+    // the byte cap the server enforces at presign, and under deferUpload a
+    // late server 413 would land after the parent entity was committed.
     const onChange = vi.fn();
     render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={onChange} />);
     const file = new File([new Uint8Array(2 * 1024 * 1024)], 'big.png', { type: 'image/png' });
     const input = screen.getByLabelText(/file/i, { selector: 'input' });
     fireEvent.change(input, { target: { files: [file] } });
-    expect(await screen.findByText(/File too large/i)).toBeInTheDocument();
+    expect(await screen.findByText(/too large after processing/i)).toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('does not reject a large raster source at the door — it reaches the crop editor', async () => {
+    // A 20MB camera export is exactly what the crop editor exists to rescue:
+    // the per-kind maxSize applies to the baked output, not the source.
+    const restore = stubCropCapableEnv();
+    try {
+      const uploadFn = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/b.png', assetId: 'ast_b' });
+      render(<MediaUploader kind="banner" ownerType="project" ownerId="65f0" uploadFn={uploadFn} onChange={vi.fn()} />);
+      const file = new File([new Uint8Array(20 * 1024 * 1024)], 'camera.png', { type: 'image/png' });
+      fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [file] } });
+      expect(await screen.findByRole('button', { name: 'Apply' })).toBeInTheDocument();
+      expect(screen.queryByText(/File too large/i)).not.toBeInTheDocument();
+    } finally {
+      restore();
+    }
+  });
+
+  it('still rejects a runaway source above the read-cost cap, before any decode', async () => {
+    const onChange = vi.fn();
+    render(<MediaUploader kind="banner" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={onChange} />);
+    const file = new File([new Uint8Array(33 * 1024 * 1024)], 'runaway.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [file] } });
+    expect(await screen.findByText(/File too large \(max 32 MB\)/i)).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('holds SVG to the strict maxSize — never re-encoded, the source is the artifact', async () => {
+    const onChange = vi.fn();
+    render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={noopUpload} onChange={onChange} />);
+    const big = new File([new Uint8Array(1024 * 1024 + 1)], 'big.svg', { type: 'image/svg+xml' });
+    fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [big] } });
+    expect(await screen.findByText(/File too large \(max 1 MB\)/i)).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('uploads an in-spec SVG untouched', async () => {
+    const uploadFn = vi.fn().mockResolvedValue({ publicUrl: 'https://cdn/l.svg', assetId: 'ast_svg' });
+    const onChange = vi.fn();
+    render(<MediaUploader kind="logo" ownerType="project" ownerId="65f0" uploadFn={uploadFn} onChange={onChange} />);
+    const small = new File([new Uint8Array(400 * 1024)], 'ok.svg', { type: 'image/svg+xml' });
+    fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [small] } });
+    await waitFor(() => expect(uploadFn).toHaveBeenCalled());
+    expect(onChange).toHaveBeenCalledWith('https://cdn/l.svg');
+  });
+
+  it('never hands an oversized bake to a deferUpload parent', async () => {
+    // deferUpload consumers create the entity FIRST and upload after — if the
+    // oversized file escaped the picker, the record would commit and the
+    // upload would then 413, leaving a half-written entity with no image.
+    const onFileSelected = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <MediaUploader
+        kind="logo"
+        ownerType="project"
+        ownerId="pending"
+        deferUpload
+        onFileSelected={onFileSelected}
+        uploadFn={noopUpload}
+        onChange={onChange}
+      />,
+    );
+    const file = new File([new Uint8Array(2 * 1024 * 1024)], 'big.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/file/i, { selector: 'input' }), { target: { files: [file] } });
+    expect(await screen.findByText(/too large after processing/i)).toBeInTheDocument();
+    expect(onFileSelected).not.toHaveBeenCalled();
   });
 
   it('rejects image whose dimensions exceed the limit (client-side)', async () => {
