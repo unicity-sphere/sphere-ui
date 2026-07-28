@@ -4,8 +4,11 @@
    Used by: sphere, sphere-backoffice, sphere-dev-portal, sphere-quest
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Brand fonts — Anton (headlines), Geist (body), Geist Mono (code) */
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@300..900&family=Geist+Mono:wght@300..700&display=swap');
+/* Brand fonts — Anton (headlines), Geist (body), Geist Mono (code).
+   Self-hosted: a RELATIVE @import, which bundlers inline. The remote one this
+   replaces did not inline, so it reached Google from every consumer's built CSS
+   regardless of what their index.html said. See fonts.css. */
+@import './fonts.css';
 
 :root {
   color-scheme: dark;
