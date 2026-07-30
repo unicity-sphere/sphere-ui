@@ -20,6 +20,18 @@ describe('<FeaturedProjectCard>', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
+  it('renders the quests stat as 0 when explicitly passed 0', () => {
+    render(<FeaturedProjectCard name="X" logoUrl={null} bannerUrl={null} quests={0} />);
+    expect(screen.getByTitle('Active quests')).toHaveTextContent('0');
+  });
+
+  it('omits the quests stat entirely when quests is not provided (standalone SDK projects have no quests)', () => {
+    const { container } = render(<FeaturedProjectCard name="X" logoUrl={null} bannerUrl={null} />);
+    expect(screen.queryByTitle('Active quests')).not.toBeInTheDocument();
+    // No dangling Target icon left behind either.
+    expect(container.querySelector('svg.lucide-target')).toBeNull();
+  });
+
   it('frames the banner exactly like the marketplace card — a pinned 3:1 strip', () => {
     render(<FeaturedProjectCard name="X" logoUrl={null} bannerUrl="https://cdn/banner.png" />);
     const banner = screen.getByTestId('banner');

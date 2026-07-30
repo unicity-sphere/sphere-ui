@@ -52,6 +52,23 @@ describe('<MarketplaceProjectCard>', () => {
     expect(banner.className).not.toMatch(/\bh-24\b/);
   });
 
+  it('renders the quests stat when a value is provided', () => {
+    render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl={null} quests={5} />);
+    expect(screen.getByTitle('Active quests')).toHaveTextContent('5');
+  });
+
+  it('renders the quests stat as 0 when explicitly passed 0', () => {
+    render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl={null} quests={0} />);
+    expect(screen.getByTitle('Active quests')).toHaveTextContent('0');
+  });
+
+  it('omits the quests stat entirely when quests is not provided (standalone SDK projects have no quests)', () => {
+    const { container } = render(<MarketplaceProjectCard name="X" logoUrl={null} bannerUrl={null} />);
+    expect(screen.queryByTitle('Active quests')).not.toBeInTheDocument();
+    // No dangling Target icon left behind either.
+    expect(container.querySelector('svg.lucide-target')).toBeNull();
+  });
+
   it('renders the category chip neutral, never accent-tinted', () => {
     render(
       <MarketplaceProjectCard

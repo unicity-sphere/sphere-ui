@@ -11,6 +11,7 @@ export interface MarketplaceProjectCardProps {
   accentColor?: string;
   category?: 'game' | 'defi' | 'social' | 'tool' | 'nft' | 'other' | string;
   users?: number;
+  /** Active quest count. Omit entirely for standalone (SDK) projects that have no quests — a `0` renders as `0`, absent renders nothing. */
   quests?: number;
   positivePercent?: number;
   ratingCount?: number;
@@ -42,7 +43,7 @@ export function MarketplaceProjectCard({
   accentColor = '#FF6F00',
   category,
   users = 0,
-  quests = 0,
+  quests,
   positivePercent = 0,
   ratingCount = 0,
   installState = 'none',
@@ -129,7 +130,9 @@ export function MarketplaceProjectCard({
           ) : <span />}
           <div className="flex items-center gap-3 text-[11px] text-neutral-400 dark:text-white/35">
             <span className="flex items-center gap-1" title="Users"><Users className="w-3 h-3" />{users.toLocaleString()}</span>
-            <span className="flex items-center gap-1" title="Active quests"><Target className="w-3 h-3" />{quests.toLocaleString()}</span>
+            {quests !== undefined && (
+              <span className="flex items-center gap-1" title="Active quests"><Target className="w-3 h-3" />{quests.toLocaleString()}</span>
+            )}
             {ratingCount > 0 && (
               <span className="flex items-center gap-1" title={`${ratingCount} reviews`}>
                 <ThumbsUp className="w-3 h-3" />{positivePercent}%
