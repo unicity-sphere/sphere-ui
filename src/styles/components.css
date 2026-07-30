@@ -117,7 +117,16 @@ select.admin-input {
 
 /* ─── Animations ─────────────────────────────────────────────────────── */
 @keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-@keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+/* The final keyframe MUST end at `transform: none`, not `translateY(0)`.
+   With `fill-mode: both` the last keyframe's value is retained forever, and a
+   transform of `translateY(0)` is still a transform — it permanently makes the
+   element a containing block for `position: fixed` descendants. A dialog
+   rendered inside an `.animate-fade-in` wrapper then positions itself against
+   that wrapper instead of the viewport, and on a short page its top ends up
+   above the screen where it cannot be scrolled to. `none` animates
+   identically (it interpolates as the identity transform) and leaves no
+   containing block behind. */
+@keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .animate-fade-in { animation: fade-in 0.3s ease-out both; }
 
 /* ─── Skeleton ────────────────────────────────────────────────────────── */
