@@ -1,0 +1,88 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AnnouncementBell } from '../AnnouncementBell.js';
+import type { ClientAnnouncement } from '../types.js';
+
+function item(over: Partial<ClientAnnouncement> = {}): ClientAnnouncement {
+  return {
+    id: 'a1', priority: 'major', type: 'release', title: 'Season 3 quests are open',
+    summary: 'Forty-two new quests went live.', body: 'Body', heroUrl: null, cta: null,
+    publishAt: '2026-07-01T00:00:00.000Z', expiresAt: null, read: false, ...over,
+  };
+}
+
+const noop = () => {};
+function props(over: Record<string, unknown> = {}) {
+  return {
+    items: [item()], unreadCount: 1, prefs: { autoOpenEnabled: true },
+    onMarkRead: noop, onMarkAllRead: noop, onSetAutoOpen: noop, onOpenItem: noop,
+    ...over,
+  };
+}
+
+describe('AnnouncementBell', () => {
+  it('shows the unread count on the bell', () => {
+    render(<AnnouncementBell {...props()} />);
+    expect(screen.getByRole('button', { name: /announcements/i }).textContent).toContain('1');
+  });
+
+  it('hides the badge entirely when nothing is unread', () => {
+    render(<AnnouncementBell {...props({ unreadCount: 0 })} />);
+    expect(screen.getByRole('button', { name: /announcements/i }).textContent).not.toContain('0');
+  });
+
+  it('keeps the popover closed until the bell is clicked', async () => {
+    render(<AnnouncementBell {...props()} />);
+    expect(screen.queryByText('Season 3 quests are open')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    expect(screen.getByText('Season 3 quests are open')).toBeTruthy();
+  });
+
+  it('opens an announcement and marks it read in one click', async () => {
+    const onOpenItem = vi.fn();
+    const onMarkRead = vi.fn();
+    render(<AnnouncementBell {...props({ onOpenItem, onMarkRead })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    await userEvent.click(screen.getByText('Season 3 quests are open'));
+    expect(onOpenItem).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }));
+    expect(onMarkRead).toHaveBeenCalledWith('a1', 'popover');
+  });
+
+  it('marks everything read from the footer', async () => {
+    const onMarkAllRead = vi.fn();
+    render(<AnnouncementBell {...props({ onMarkAllRead })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    await userEvent.click(screen.getByRole('button', { name: /mark all read/i }));
+    expect(onMarkAllRead).toHaveBeenCalled();
+  });
+
+  it('exposes the auto-open toggle and reports changes', async () => {
+    const onSetAutoOpen = vi.fn();
+    render(<AnnouncementBell {...props({ onSetAutoOpen })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    const toggle = screen.getByRole('switch', { name: /auto-open/i });
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    await userEvent.click(toggle);
+    expect(onSetAutoOpen).toHaveBeenCalledWith(false);
+  });
+
+  it('renders an empty state rather than a bare panel', async () => {
+    render(<AnnouncementBell {...props({ items: [], unreadCount: 0 })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    expect(screen.getByText(/nothing new/i)).toBeTruthy();
+  });
+
+  it('falls back to a type icon when an announcement has no image', async () => {
+    render(<AnnouncementBell {...props()} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    expect(screen.getByTestId('announcement-type-icon')).toBeTruthy();
+  });
+
+  it('closes on Escape', async () => {
+    render(<AnnouncementBell {...props()} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByText('Season 3 quests are open')).toBeNull();
+  });
+});
