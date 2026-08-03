@@ -13,7 +13,7 @@ describe('priorityTheme', () => {
       label:       'Critical',
       accent:      'var(--announcement-alert)',
       pillClass:   'bg-[rgba(229,72,77,0.15)] text-[var(--announcement-alert-text)]',
-      borderClass: 'border-[var(--announcement-alert)]/28',
+      borderClass: 'border-[var(--announcement-alert-border)]',
       opensModal:  true,
     });
   });
@@ -53,6 +53,18 @@ describe('priorityTheme', () => {
     expect(classLines.length).toBeGreaterThan(0);
     for (const line of classLines) {
       expect(line).not.toContain('${');
+    }
+  });
+
+  // Regression guard: an opacity modifier applied to a `var()` arbitrary
+  // value (`border-[var(--x)]/28`) has no precedent in this codebase and its
+  // support isn't guaranteed across every consumer's Tailwind version —
+  // colours with alpha belong baked into the token (`--announcement-alert-border`
+  // in tokens.css) instead. This pins that choice so nobody reintroduces the
+  // modifier form for a "cleaner" one-liner later.
+  it('never applies an opacity modifier to a borderClass value', () => {
+    for (const priority of ['critical', 'major', 'normal'] as const) {
+      expect(priorityTheme(priority).borderClass).not.toMatch(/\]\/\d/);
     }
   });
 });

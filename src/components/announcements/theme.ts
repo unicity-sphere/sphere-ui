@@ -43,11 +43,13 @@ const THEMES: Record<AnnouncementPriority, PriorityTheme> = {
     label:       'Critical',
     accent:      ALERT,
     pillClass:   'bg-[rgba(229,72,77,0.15)] text-[var(--announcement-alert-text)]',
-    // References the token directly (with a Tailwind v4 opacity modifier)
-    // rather than a second raw rgba literal, so the one place this colour is
-    // defined stays --announcement-alert in tokens.css, not that plus a
-    // duplicated (229,72,77) triplet here.
-    borderClass: 'border-[var(--announcement-alert)]/28',
+    // --announcement-alert-border bakes the 0.28 alpha into the token itself
+    // (see tokens.css), rather than applying a Tailwind opacity modifier to
+    // a `var()` arbitrary value here — that form has no precedent in either
+    // repo and isn't worth trusting sight-unseen after this plan already
+    // lost a day to a class that looked fine in source and was never
+    // emitted. No modifier, no question.
+    borderClass: 'border-[var(--announcement-alert-border)]',
     opensModal:  true,
   },
   major: {
