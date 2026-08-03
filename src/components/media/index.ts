@@ -13,4 +13,5 @@ export {
   type AchievementPreviewSummary,
 } from './ProjectPagePreview.js';
 export { MEDIA_LIMITS, isMimeAllowed, isSizeAllowed, humanSize } from './media-limits.js';
-export type { MediaKind, MediaMime, MediaLimit, MediaUploadFn, MediaUploadResult } from './types.js';
+export type { MediaKind, MediaMime, MediaLimit, MediaUploadFn, MediaUploadResult, MediaOwnerType } from './types.js';
+export { MEDIA_OWNER_TYPES } from './types.js';

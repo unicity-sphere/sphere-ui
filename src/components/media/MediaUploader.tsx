@@ -9,14 +9,14 @@ import {
   sourceSizeLimit,
   humanSize,
 } from './media-limits.js';
-import type { MediaKind, MediaUploadFn, MediaLimit } from './types.js';
+import type { MediaKind, MediaUploadFn, MediaLimit, MediaOwnerType } from './types.js';
 import { Input } from '../Input.js';
 import { BannerCropEditor } from './BannerCropEditor.js';
 import type { CropRect } from './crop-rect.js';
 
 export interface MediaUploaderProps {
   kind: MediaKind;
-  ownerType: 'project' | 'organization' | 'quest' | 'achievement' | 'track';
+  ownerType: MediaOwnerType;
   ownerId: string;
   value?: string | null;
   onChange: (url: string | null) => void;
