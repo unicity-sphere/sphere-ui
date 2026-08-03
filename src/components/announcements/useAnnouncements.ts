@@ -41,10 +41,25 @@ export interface UseAnnouncementsOptions {
   enabled?: boolean;
 }
 
+export interface UseAnnouncementsResult {
+  items:        ClientAnnouncement[];
+  unreadCount:  number;
+  prefs:        { autoOpenEnabled: boolean };
+  autoOpenId:   string | null;
+  isLoading:    boolean;
+  error:        Error | null;
+  markRead:     (id: string, via: 'modal' | 'popover') => Promise<void>;
+  markAllRead:  () => Promise<void>;
+  setAutoOpen:  (value: boolean) => Promise<void>;
+  dismissModal: () => void;
+  refresh:      () => Promise<void>;
+}
+
+/** Call this hook once per app and pass its values down to the bell and the modal — see `sessionModalShown` above for why. */
 export function useAnnouncements(
   client: AnnouncementsClient,
   opts: UseAnnouncementsOptions = {},
-) {
+): UseAnnouncementsResult {
   const enabled = opts.enabled ?? true;
 
   const [feed, setFeed]       = useState<AnnouncementFeed | null>(null);
