@@ -47,7 +47,9 @@
     "framer-motion": "^11.18.2",
     "lucide-react": ">=0.400.0",
     "react-dropzone": "^14.4.1",
-    "react-easy-crop": "^6.2.2"
+    "react-easy-crop": "^6.2.2",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "peerDependencies": {
     "@dnd-kit/core": "^6.0.0",
