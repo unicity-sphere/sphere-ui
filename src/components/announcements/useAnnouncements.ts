@@ -68,7 +68,19 @@ export function useAnnouncements(
   const [autoOpenId, setAuto] = useState<string | null>(null);
   const alive = useRef(true);
 
-  useEffect(() => () => { alive.current = false; }, []);
+  // Re-arm on every mount, not just on the initial one: React 18/19 dev-mode
+  // StrictMode deliberately mounts, cleans up, then mounts again to surface
+  // effects that don't tolerate it. A cleanup-only effect leaves `alive`
+  // permanently false after that synthetic first cleanup, so the in-flight
+  // `getFeed()` from the (also synthetic) first mount — and every load after
+  // it — hits `if (!alive.current) return` before `setLoad(false)`, and
+  // `isLoading` never leaves `true`. Setting it back to `true` on mount keeps
+  // the ref in sync with the component's actual lifecycle instead of only
+  // its first one.
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
 
   const load = useCallback(async () => {
     if (!enabled) { setLoad(false); return; }

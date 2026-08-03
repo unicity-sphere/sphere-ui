@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { StrictMode } from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAnnouncements, __resetSessionModalFlag } from '../useAnnouncements.js';
 import type { AnnouncementsClient, AnnouncementFeed } from '../types.js';
@@ -128,5 +129,17 @@ describe('useAnnouncements', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(client.getFeed).not.toHaveBeenCalled();
     expect(result.current.items).toEqual([]);
+  });
+
+  it('still loads under React StrictMode', async () => {
+    // StrictMode's dev-only mount -> cleanup -> mount cycle is exactly what
+    // regressed: a cleanup-only `alive` effect never re-arms after the
+    // synthetic first cleanup, so `getFeed()`'s resolution finds
+    // `alive.current === false` forever and `isLoading` never clears. Every
+    // other test in this file renders unwrapped, which is how that hid.
+    const client = makeClient();
+    const { result } = renderHook(() => useAnnouncements(client), { wrapper: StrictMode });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.items).toHaveLength(1);
   });
 });

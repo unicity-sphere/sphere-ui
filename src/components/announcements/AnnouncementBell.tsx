@@ -73,6 +73,11 @@ export function AnnouncementBell({
     // same click, not two.
     onOpenItem(announcement);
     onMarkRead(announcement.id, 'popover');
+    // The row click is inside rootRef, so the outside-click handler above
+    // never fires for it — without this, the popover is left open behind
+    // the modal onOpenItem just triggered, and dismissing the modal reveals
+    // it still hanging over the page.
+    setOpen(false);
   };
 
   const badge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null;
@@ -83,6 +88,8 @@ export function AnnouncementBell({
       <button
         type="button"
         aria-label={bellLabel}
+        aria-haspopup="true"
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
         className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors hover:bg-white/5"
         style={{ color: 'var(--text-secondary)' }}

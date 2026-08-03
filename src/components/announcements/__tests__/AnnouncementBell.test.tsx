@@ -49,6 +49,17 @@ describe('AnnouncementBell', () => {
     expect(onMarkRead).toHaveBeenCalledWith('a1', 'popover');
   });
 
+  it('closes the popover when a row is clicked, not just when opening its modal', async () => {
+    // A row click is inside rootRef, so the outside-click handler never
+    // fires for it — without an explicit close, the popover is left open
+    // behind whatever modal onOpenItem triggers, and dismissing that modal
+    // reveals it still hanging over the page.
+    render(<AnnouncementBell {...props()} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    await userEvent.click(screen.getByText('Season 3 quests are open'));
+    expect(screen.queryByText('Season 3 quests are open')).toBeNull();
+  });
+
   it('marks everything read from the footer', async () => {
     const onMarkAllRead = vi.fn();
     render(<AnnouncementBell {...props({ onMarkAllRead })} />);
@@ -77,6 +88,15 @@ describe('AnnouncementBell', () => {
     render(<AnnouncementBell {...props()} />);
     await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
     expect(screen.getByTestId('announcement-type-icon')).toBeTruthy();
+  });
+
+  it('announces its popover state to assistive tech via aria-haspopup/aria-expanded', async () => {
+    render(<AnnouncementBell {...props()} />);
+    const trigger = screen.getByRole('button', { name: /announcements/i });
+    expect(trigger.getAttribute('aria-haspopup')).toBe('true');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    await userEvent.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('closes on Escape', async () => {
