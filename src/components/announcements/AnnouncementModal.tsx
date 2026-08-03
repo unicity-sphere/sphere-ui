@@ -37,6 +37,22 @@ export function AnnouncementModal({ announcement, onDismiss, onCtaClick }: Annou
   const dialogRef = useRef<HTMLDivElement>(null);
   const returnFocusTo = useRef<HTMLElement | null>(null);
 
+  // `onDismiss` is read through a ref, not captured by the effect below.
+  // Consumers overwhelmingly pass an inline arrow — that's the pattern
+  // Tasks 4/5 use — which gets a new identity on every parent render. If
+  // that identity were in the focus effect's dependency array, the whole
+  // effect would tear down and re-run on every parent re-render while the
+  // modal is open: cleanup yanks focus back to the pre-open element, then
+  // setup immediately re-steals it into the dialog. Visible flicker and a
+  // repeat screen-reader announcement, in the one component whose job is to
+  // interrupt people. Keeping the callback in a ref means the effect below
+  // never needs it in its dependency array, so its lifetime is the modal's
+  // lifetime, not the callback's identity.
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
   useEffect(() => {
     returnFocusTo.current = document.activeElement as HTMLElement | null;
 
@@ -46,7 +62,7 @@ export function AnnouncementModal({ announcement, onDismiss, onCtaClick }: Annou
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onDismiss();
+        onDismissRef.current();
         return;
       }
       if (e.key !== 'Tab' || !dialog) return;
@@ -76,7 +92,11 @@ export function AnnouncementModal({ announcement, onDismiss, onCtaClick }: Annou
       document.removeEventListener('keydown', onKeyDown);
       returnFocusTo.current?.focus?.();
     };
-  }, [onDismiss]);
+    // Deliberately empty: this effect's lifetime is the modal's mount
+    // lifetime. It must run exactly once on mount and clean up exactly once
+    // on unmount — see the comment above `onDismissRef`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCta = () => {
     onCtaClick(announcement);
@@ -155,7 +175,15 @@ export function AnnouncementModal({ announcement, onDismiss, onCtaClick }: Annou
               className="text-sm font-medium px-4 py-2 rounded-lg transition-colors hover:bg-white/5"
               style={{ color: 'var(--text-secondary)' }}
             >
-              {announcement.cta ? 'Later' : 'Got it'}
+              {/* Flavour decides first, CTA presence second — not the other
+                  way around. Alert is "do something now": the acknowledgement
+                  is always "Got it", whether or not there's also a CTA to act
+                  on (a critical announcement with a CTA must not say "Later"
+                  to something urgent). Editorial is "look what we shipped":
+                  "Later" only makes sense when there's something to defer,
+                  i.e. a CTA — with none, this is the sole action and reads as
+                  "Got it" too. */}
+              {isAlert ? 'Got it' : (announcement.cta ? 'Later' : 'Got it')}
             </button>
             {announcement.cta && (
               <button
