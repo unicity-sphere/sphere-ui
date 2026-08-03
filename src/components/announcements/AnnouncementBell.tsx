@@ -13,6 +13,17 @@ export interface AnnouncementBellProps {
   onOpenItem:     (announcement: ClientAnnouncement) => void;
   /** Footer link to the full announcement centre. Footer is omitted when absent. */
   onViewAll?: () => void;
+  /**
+   * Which edge the popover hangs from. Defaults to 'right' (today's
+   * behaviour, the bell's own right edge). Pass 'left' when the bell sits
+   * near the left edge of a narrow container (e.g. a sidebar) and a
+   * right-anchored `w-80` popover would render partly or entirely
+   * off-screen. Both `left-0`/`right-0` below are complete literal class
+   * names selected by a ternary, never built by interpolation — this
+   * library ships class STRINGS the consumer's Tailwind build compiles, and
+   * a scanner can only see whole names present verbatim in source.
+   */
+  align?: 'left' | 'right';
 }
 
 /**
@@ -32,7 +43,7 @@ export interface AnnouncementBellProps {
  * modal (Task 3) on load — it never hides anything from this list.
  */
 export function AnnouncementBell({
-  items, unreadCount, prefs, onMarkRead, onMarkAllRead, onSetAutoOpen, onOpenItem, onViewAll,
+  items, unreadCount, prefs, onMarkRead, onMarkAllRead, onSetAutoOpen, onOpenItem, onViewAll, align = 'right',
 }: AnnouncementBellProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -90,7 +101,7 @@ export function AnnouncementBell({
 
       {open && (
         <div
-          className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl overflow-hidden z-50"
+          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl overflow-hidden z-50`}
           style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
         >
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>

@@ -85,4 +85,20 @@ describe('AnnouncementBell', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByText('Season 3 quests are open')).toBeNull();
   });
+
+  it('hangs the popover from its right edge by default', async () => {
+    render(<AnnouncementBell {...props()} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    const popover = screen.getByText('Season 3 quests are open').closest('[class*="absolute"]');
+    expect(popover?.className).toContain('right-0');
+    expect(popover?.className).not.toContain('left-0');
+  });
+
+  it('hangs the popover from its left edge when align="left"', async () => {
+    render(<AnnouncementBell {...props({ align: 'left' })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    const popover = screen.getByText('Season 3 quests are open').closest('[class*="absolute"]');
+    expect(popover?.className).toContain('left-0');
+    expect(popover?.className).not.toContain('right-0');
+  });
 });
