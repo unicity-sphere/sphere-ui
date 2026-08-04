@@ -8,6 +8,9 @@ export default defineConfig({
     'panels/index': 'src/panels/index.ts',
     'hooks/index': 'src/hooks/index.ts',
     'analytics/index': 'src/analytics/index.ts',
+    // Standalone entry so a consumer that only needs the announcement centre
+    // does not pull in the table / drag-and-drop peers of the main barrel.
+    'announcements/index': 'src/components/announcements/index.ts',
   },
   format: ['esm'],
   dts: true,
