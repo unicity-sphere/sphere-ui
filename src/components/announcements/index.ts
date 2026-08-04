@@ -1,6 +1,7 @@
-// Announcements — types, port, theme, hook and the surfaces built on them.
+// Announcements — types, port, theme, icons, hook and the surfaces built on them.
 export * from './types.js';
 export * from './theme.js';
+export * from './icons.js';
 export { useAnnouncements, __resetSessionModalFlag } from './useAnnouncements.js';
 export type { UseAnnouncementsOptions, UseAnnouncementsResult } from './useAnnouncements.js';
 export { AnnouncementBell } from './AnnouncementBell.js';

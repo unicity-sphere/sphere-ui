@@ -12,6 +12,11 @@ export interface ClientAnnouncement {
   summary:   string;
   body:      string;
   heroUrl:   string | null;
+  /** Explicit override of the type's default glyph, or null/undefined when
+   *  the announcement never overrode it. Validated server-side against the
+   *  same closed set `iconForAnnouncement` (./icons.ts) reads — see that
+   *  file for why an unrecognised value still resolves to a real glyph. */
+  icon?:     string | null;
   /** Already flattened to this portal by the server. */
   cta:       { label: string; url: string } | null;
   publishAt: string;

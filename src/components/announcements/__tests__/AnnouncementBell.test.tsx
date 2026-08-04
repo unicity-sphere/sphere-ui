@@ -84,10 +84,17 @@ describe('AnnouncementBell', () => {
     expect(screen.getByText(/nothing new/i)).toBeTruthy();
   });
 
-  it('falls back to a type icon when an announcement has no image', async () => {
+  it('always renders the type icon', async () => {
     render(<AnnouncementBell {...props()} />);
     await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
     expect(screen.getByTestId('announcement-type-icon')).toBeTruthy();
+  });
+
+  it('renders no <img> even when the announcement has a heroUrl — the row never shows the hero', async () => {
+    render(<AnnouncementBell {...props({ items: [item({ heroUrl: 'https://cdn.example/hero.png' })] })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    expect(screen.getByTestId('announcement-type-icon')).toBeTruthy();
+    expect(screen.queryByRole('img')).toBeNull();
   });
 
   it('announces its popover state to assistive tech via aria-haspopup/aria-expanded', async () => {

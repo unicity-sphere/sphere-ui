@@ -1,26 +1,12 @@
-import { Calendar, RefreshCw, Rocket, ShieldAlert, Wrench } from 'lucide-react';
-import type { AnnouncementType, ClientAnnouncement } from './types.js';
+import type { ClientAnnouncement } from './types.js';
 import { priorityTheme } from './theme.js';
+import { iconForAnnouncement } from './icons.js';
 
 export interface AnnouncementRowProps {
   announcement: ClientAnnouncement;
   /** Fires from any part of the row — opening and marking read are one gesture, not two. */
   onClick: (announcement: ClientAnnouncement) => void;
 }
-
-/**
- * One glyph per announcement type, stood in for the hero thumbnail when
- * there is no image — an attachment-less note must never look like a
- * broken image box. Reuses lucide-react (already a dependency here, see
- * DashboardLayout/KPICard) instead of hand-drawn paths.
- */
-const TYPE_ICONS: Record<AnnouncementType, typeof Rocket> = {
-  release:     Rocket,
-  update:      RefreshCw,
-  event:       Calendar,
-  maintenance: Wrench,
-  security:    ShieldAlert,
-};
 
 const MINUTE = 60_000;
 const HOUR   = 60 * MINUTE;
@@ -51,10 +37,19 @@ function formatRelativeTime(iso: string): string {
  * The whole row is a single button: clicking anywhere on it both opens the
  * announcement and marks it read, since a mailbox row is scanned and acted
  * on in one gesture, not two.
+ *
+ * Every row renders the same small glyph tile, never the hero image: the
+ * hero is authored as a 3:1 banner, and centre-cropping it into a square
+ * here showed readers a different framing than the one the author picked,
+ * with no way for them to control it. The banner keeps its job in
+ * `AnnouncementModal`, which has the width to show it uncropped — this row
+ * is a scannable list, not a second place to display it. Structurally
+ * identical rows also mean the eye runs down one column of title/summary
+ * text instead of a column of mismatched thumbnails.
  */
 export function AnnouncementRow({ announcement, onClick }: AnnouncementRowProps) {
   const theme = priorityTheme(announcement.priority);
-  const TypeIcon = TYPE_ICONS[announcement.type];
+  const TypeIcon = iconForAnnouncement(announcement.type, announcement.icon);
 
   return (
     <button
@@ -63,20 +58,15 @@ export function AnnouncementRow({ announcement, onClick }: AnnouncementRowProps)
       className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5 border-l-4 ${theme.borderClass}`}
       style={{ background: announcement.read ? 'transparent' : 'var(--accent-glow)' }}
     >
-      <div className="w-12 h-12 rounded-lg shrink-0 overflow-hidden">
-        {announcement.heroUrl ? (
-          <img src={announcement.heroUrl} alt="" className="w-full h-full object-cover" />
-        ) : (
-          // No hero image: the type icon on --bg-hover stands in, so the row
-          // never looks like a broken attachment.
-          <div
-            data-testid="announcement-type-icon"
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: 'var(--bg-hover)' }}
-          >
-            <TypeIcon className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
-          </div>
-        )}
+      {/* Smaller and quieter than the old 48px hero tile on purpose — this
+          is a type indicator, not imagery, so it should read as secondary to
+          the title/summary text next to it. */}
+      <div
+        data-testid="announcement-type-icon"
+        className="w-[34px] h-[34px] rounded-lg shrink-0 flex items-center justify-center"
+        style={{ background: 'var(--bg-hover)' }}
+      >
+        <TypeIcon className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
       </div>
 
       <div className="min-w-0 flex-1">
