@@ -36,5 +36,8 @@ export * from './components/Icons';
 // Media components (uploader, gallery, marketplace preview)
 export * from './components/media/index.js';
 
+// Announcements (types, port, theme, hook, bell/popover, modal, markdown)
+export * from './components/announcements/index.js';
+
 // Types
 export * from './types';
