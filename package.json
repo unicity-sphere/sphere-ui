@@ -29,6 +29,10 @@
     "./analytics": {
       "import": "./dist/analytics/index.js",
       "types": "./dist/analytics/index.d.ts"
+    },
+    "./announcements": {
+      "import": "./dist/announcements/index.js",
+      "types": "./dist/announcements/index.d.ts"
     }
   },
   "files": [
@@ -54,6 +58,7 @@
   "peerDependencies": {
     "@dnd-kit/core": "^6.0.0",
     "@dnd-kit/sortable": "^8.0.0 || ^10.0.0",
+    "@dnd-kit/utilities": "^3.0.0",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-table": "^8.0.0",
     "react": "^19.0.0",
