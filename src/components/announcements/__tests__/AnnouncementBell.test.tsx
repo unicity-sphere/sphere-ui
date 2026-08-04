@@ -60,6 +60,27 @@ describe('AnnouncementBell', () => {
     expect(screen.queryByText('Season 3 quests are open')).toBeNull();
   });
 
+  it('omits the View all footer entirely when no onViewAll is given', async () => {
+    render(<AnnouncementBell {...props()} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    expect(screen.queryByRole('button', { name: /view all announcements/i })).toBeNull();
+  });
+
+  it('closes the popover when View all is clicked, not just when navigating away', async () => {
+    // Same reasoning as the row-click case above, and the same blind spot: the
+    // footer is inside rootRef, so neither the outside-click handler nor
+    // Escape fires for it. Navigation does not save it either — the
+    // announcement centre lives under the same layout route as the bell, so
+    // the bell survives the navigation and the popover would hang over the
+    // page the user just asked to see.
+    const onViewAll = vi.fn();
+    render(<AnnouncementBell {...props({ onViewAll })} />);
+    await userEvent.click(screen.getByRole('button', { name: /announcements/i }));
+    await userEvent.click(screen.getByRole('button', { name: /view all announcements/i }));
+    expect(onViewAll).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Season 3 quests are open')).toBeNull();
+  });
+
   it('marks everything read from the footer', async () => {
     const onMarkAllRead = vi.fn();
     render(<AnnouncementBell {...props({ onMarkAllRead })} />);

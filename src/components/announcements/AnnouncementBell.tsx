@@ -80,6 +80,18 @@ export function AnnouncementBell({
     setOpen(false);
   };
 
+  const handleViewAll = () => {
+    // Exactly the hazard handleRowClick guards against, one button lower: the
+    // footer is inside rootRef, so neither the outside-click handler nor
+    // Escape ever fires for it. And navigating does not clean it up either —
+    // every portal routes its announcement centre under the same layout as
+    // this bell, so the bell stays mounted across the navigation and the
+    // popover hangs over the destination page until something unrelated
+    // happens to close it. Close first, then hand off.
+    setOpen(false);
+    onViewAll?.();
+  };
+
   const badge = unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null;
   const bellLabel = badge ? `Announcements, ${unreadCount} unread` : 'Announcements';
 
@@ -166,7 +178,7 @@ export function AnnouncementBell({
           {onViewAll && (
             <button
               type="button"
-              onClick={onViewAll}
+              onClick={handleViewAll}
               className="w-full text-center text-xs font-medium py-2.5"
               style={{ color: 'var(--accent-text)', borderTop: '1px solid var(--border)' }}
             >
