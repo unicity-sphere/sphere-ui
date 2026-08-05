@@ -198,13 +198,32 @@ src/
 
 ## Peer Dependencies
 
+Required — every entry point needs them:
+
 - `react` ^19.0.0
 - `react-dom` ^19.0.0
-- `@tanstack/react-query` ^5.0.0
-- `@tanstack/react-table` ^8.0.0
-- `@dnd-kit/core` ^6.0.0
-- `@dnd-kit/sortable` ^8.0.0
-- `lucide-react` ^0.400.0
+
+Optional (`peerDependenciesMeta.optional`) — only some entry points need them:
+
+- `@tanstack/react-table` ^8.0.0 — root barrel only (`DataTable`)
+- `@dnd-kit/core` ^6.0.0 — root barrel and `./hooks` only
+- `@dnd-kit/sortable` ^8.0.0 || ^10.0.0 — root barrel and `./hooks` only
+- `@dnd-kit/utilities` ^3.0.0 — root barrel only (`MediaGallery`)
+- `recharts` ^3.0.0 — `./analytics` only
+- `@tanstack/react-query` ^5.0.0 — no entry point imports it today; kept as a
+  version hint for apps that pair it with these components
+
+**Do not make these required again.** npm 7+ auto-installs non-optional peers,
+so a non-optional entry here forces every consumer's lockfile to contain it,
+even one that imports a narrow subpath like `./announcements` (react +
+lucide-react + react-markdown + remark-gfm and nothing else). Consumers whose
+lockfile was generated with `legacy-peer-deps=true` then fail `npm ci` in CI
+with "Missing: <pkg> from lock file". Marking them optional lets each app
+declare only what it actually uses; the root-barrel consumers (`sphere`,
+`sphere-dev-portal`, `sphere-backoffice`) already list all of them as their own
+direct dependencies, so nothing changes for them.
+
+`lucide-react` is a regular dependency, not a peer.
 
 ## License
 
