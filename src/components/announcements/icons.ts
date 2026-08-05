@@ -3,6 +3,7 @@ import {
   Megaphone, Gift, Sparkles, AlertTriangle, Info, Key, Coins, PartyPopper,
 } from 'lucide-react';
 import type { AnnouncementType } from './types.js';
+import { DiscordIcon } from './DiscordIcon.js';
 
 /**
  * The closed set of icon keys an announcement can be tagged with. A stored
@@ -25,14 +26,19 @@ import type { AnnouncementType } from './types.js';
 export const ANNOUNCEMENT_ICON_KEYS = [
   'release', 'update', 'event', 'maintenance', 'security',
   'megaphone', 'gift', 'sparkles', 'alert-triangle', 'info', 'key', 'coins', 'party',
+  'discord',
 ] as const;
 
 export type AnnouncementIconKey = typeof ANNOUNCEMENT_ICON_KEYS[number];
 
 /**
- * One lucide-react component per key. Every consumer — this row, and
+ * One icon component per key. Every consumer — this row, and
  * sphere-backoffice's icon picker — reads a glyph from this single map, so
  * there is exactly one place that decides what each key looks like.
+ *
+ * All lucide-react except `discord`: lucide carries no brand marks, so that
+ * one is drawn locally against the same component contract (see
+ * DiscordIcon.tsx) and is otherwise indistinguishable to every call site.
  */
 export const ANNOUNCEMENT_ICONS: Record<AnnouncementIconKey, typeof Rocket> = {
   release:          Rocket,
@@ -48,6 +54,7 @@ export const ANNOUNCEMENT_ICONS: Record<AnnouncementIconKey, typeof Rocket> = {
   key:              Key,
   coins:            Coins,
   party:            PartyPopper,
+  discord:          DiscordIcon,
 };
 
 function isAnnouncementIconKey(value: string): value is AnnouncementIconKey {
