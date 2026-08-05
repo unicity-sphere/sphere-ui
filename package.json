@@ -66,6 +66,21 @@
     "recharts": "^3.0.0"
   },
   "peerDependenciesMeta": {
+    "@dnd-kit/core": {
+      "optional": true
+    },
+    "@dnd-kit/sortable": {
+      "optional": true
+    },
+    "@dnd-kit/utilities": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "@tanstack/react-table": {
+      "optional": true
+    },
     "recharts": {
       "optional": true
     }
