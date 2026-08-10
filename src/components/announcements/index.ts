@@ -12,3 +12,8 @@ export { Markdown } from './Markdown.js';
 export type { MarkdownProps } from './Markdown.js';
 export { AnnouncementModal } from './AnnouncementModal.js';
 export type { AnnouncementModalProps } from './AnnouncementModal.js';
+// Exported for the admin composer's preview, which renders the modal's card
+// without the backdrop/dialog wrapper so what an author proof-reads is the
+// component their readers get, not a second implementation of it.
+export { AnnouncementModalCard } from './AnnouncementModalCard.js';
+export type { AnnouncementModalCardProps } from './AnnouncementModalCard.js';

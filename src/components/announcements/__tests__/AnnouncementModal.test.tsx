@@ -59,6 +59,39 @@ describe('AnnouncementModal', () => {
     expect(container.textContent).toContain('after');
   });
 
+  it('renders the body for a critical announcement, not the one-line popover summary', () => {
+    // Regression: the alert flavour used to render `summary` — the two-line
+    // string the bell popover shows — so everything the author wrote below
+    // the first paragraph (the actual instructions a critical notice exists
+    // to deliver) never reached the reader, even though the composer's own
+    // preview showed the full body.
+    const critical = item({
+      priority: 'critical',
+      summary:  'One line for the bell popover.',
+      body:     'Update to **0.14.3** and redeploy.\n\n## Building a bot?\n\nThere is more to do than the version.',
+    });
+    render(<AnnouncementModal announcement={critical} onDismiss={() => {}} onCtaClick={() => {}} />);
+
+    expect(screen.getByText('0.14.3').tagName).toBe('STRONG');
+    expect(screen.getByRole('heading', { name: /building a bot/i })).toBeTruthy();
+    expect(screen.getByText(/more to do than the version/)).toBeTruthy();
+    // The summary is the popover's job; repeating it above a body derived
+    // from the same first paragraph would read as a stutter.
+    expect(screen.queryByText('One line for the bell popover.')).toBeNull();
+  });
+
+  it('keeps the actions reachable when the body is longer than the viewport', () => {
+    // A blocking modal whose dismiss button has been pushed off-screen by a
+    // long body is a trap: the body scrolls, the header and actions do not.
+    const long = item({ priority: 'critical', body: Array.from({ length: 80 }, (_, i) => `Line ${i}.`).join('\n\n') });
+    render(<AnnouncementModal announcement={long} onDismiss={() => {}} onCtaClick={() => {}} />);
+
+    const scroller = screen.getByTestId('announcement-modal-body');
+    expect(scroller.className).toContain('overflow-y-auto');
+    // The dismiss button must live outside the scrolling region.
+    expect(scroller.contains(screen.getByRole('button', { name: /got it/i }))).toBe(false);
+  });
+
   it('always shows "Got it" for a critical announcement, even when it has a cta', () => {
     const critical = item({ priority: 'critical', cta: { label: 'View status', url: '/status' } });
     render(<AnnouncementModal announcement={critical} onDismiss={() => {}} onCtaClick={() => {}} />);
