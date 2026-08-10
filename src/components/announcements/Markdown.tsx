@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import type { ComponentPropsWithoutRef } from 'react';
 
@@ -41,7 +42,15 @@ export function Markdown({ children }: MarkdownProps) {
   return (
     <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        // `remark-breaks` makes a single newline a line break. Markdown's own
+        // rule is that it is a space, and only a blank line or two trailing
+        // spaces break the line — which is a reasonable rule for a document
+        // format and the wrong one for the field this text is typed into: the
+        // composer's Body is a plain textarea, and an author who pressed
+        // Enter once watched their two lines silently run together. Comment
+        // fields everywhere (GitHub's included) settle this the same way.
+        // It affects text only, so a code block's newlines stay untouched.
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           h1: props => <h1 className="text-lg font-semibold mt-4 mb-2" style={{ color: 'var(--text-primary)' }} {...props} />,
           h2: props => <h2 className="text-base font-semibold mt-4 mb-2" style={{ color: 'var(--text-primary)' }} {...props} />,

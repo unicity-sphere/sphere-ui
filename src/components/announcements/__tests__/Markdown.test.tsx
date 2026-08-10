@@ -42,6 +42,30 @@ describe('Markdown', () => {
     expect(code.getAttribute('style') ?? '').toContain('--bg-hover');
   });
 
+  // The composer's Body is a plain textarea, so an author presses Enter and
+  // expects a line break. Markdown's own rule — a single newline is a space,
+  // only a blank line or two trailing spaces break the line — silently ran
+  // their lines together, which is exactly what happened to a moderation
+  // note typed on two lines. Chat and comment fields everywhere (GitHub's
+  // included) resolve this the same way: honour the newline that was typed.
+  it('turns a single newline into a line break, as the textarea it was typed in shows it', () => {
+    const { container } = render(<Markdown>{'Test Test Test Test Test\nTestTestTestTestTest'}</Markdown>);
+    expect(container.querySelector('br')).toBeTruthy();
+  });
+
+  it('still starts a new paragraph on a blank line', () => {
+    const { container } = render(<Markdown>{'one\n\ntwo'}</Markdown>);
+    expect(container.querySelectorAll('p')).toHaveLength(2);
+  });
+
+  it('leaves the newlines inside a code block exactly as written', () => {
+    // A <br> injected into a code block would change the code itself.
+    const { container } = render(<Markdown>{'```\nnpm install\nnpm run build\n```'}</Markdown>);
+    const pre = container.querySelector('pre')!;
+    expect(pre.querySelector('br')).toBeNull();
+    expect(pre.textContent).toContain('npm install\nnpm run build');
+  });
+
   it('gives a gfm table its own rules rather than leaving it borderless', () => {
     const { container } = render(<Markdown>{'| Version | Status |\n| --- | --- |\n| 0.14.3 | current |'}</Markdown>);
 
