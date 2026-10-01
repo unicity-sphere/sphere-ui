@@ -35,6 +35,10 @@
       "types": "./dist/announcements/index.d.ts"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unicity-sphere/sphere-ui.git"
+  },
   "files": [
     "dist",
     "src/styles"
