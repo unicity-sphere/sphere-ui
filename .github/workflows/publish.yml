@@ -25,6 +25,24 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      # Trusted publishing mints a short-lived credential from this run's OIDC identity, so there
+      # is no npm token to store, rotate or leak. It needs npm 11.5.1 or newer, and setup-node
+      # brings whatever npm Node 22 bundles — 10.x, which predates the feature and would quietly
+      # fall back to looking for a token that is no longer there.
+      - name: Install an npm that can publish over OIDC
+        run: npm install -g npm@latest
+
+      # Without this, a missing `id-token: write` surfaces as an authentication error at the very
+      # end of the run, after install, typecheck and build — and npm reports a failed publish
+      # authorisation as a 404, which reads as "the package does not exist".
+      - name: Check this run can mint an OIDC credential
+        run: |
+          echo "npm $(npm --version)"
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::This run has no OIDC token endpoint. Publishing uses npm trusted publishing, which needs 'permissions: id-token: write' on this job."
+            exit 1
+          fi
+
       - name: Validate version format
         run: |
           if ! echo "${{ inputs.version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
@@ -53,10 +71,11 @@ jobs:
             echo "tag=dev" >> "$GITHUB_OUTPUT"
           fi
 
+      # No NODE_AUTH_TOKEN: the credential comes from this run's OIDC identity, which npm checks
+      # against the trusted publisher configured on the package (repository unicity-sphere/sphere-ui,
+      # workflow publish.yml). Nothing here is a secret, so nothing here can expire.
       - name: Publish to npm
         run: npm publish --access public --tag ${{ steps.dist-tag.outputs.tag }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create git tag
         run: |
