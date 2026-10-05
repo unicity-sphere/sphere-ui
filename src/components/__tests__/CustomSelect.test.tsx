@@ -272,6 +272,29 @@ describe('CustomSelect', () => {
   });
 
   describe('the rest of the surface', () => {
+    /**
+     * Opening the list used to build an id selector, and `useId` produces ids containing colons,
+     * so it needed `CSS.escape`. `CSS` is not a given: the jsdom this package tests under provides
+     * it, the newer one a consumer was on did not, and the list threw a TypeError from inside this
+     * package the moment it opened — which is how it was found, in someone else's test suite.
+     *
+     * The global is deleted here rather than trusted to be absent, so the test fails in THIS
+     * environment too. Without that it would pass for the wrong reason, exactly as the original
+     * suite did.
+     */
+    it('opens without CSS.escape, which not every environment has', async () => {
+      const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'CSS');
+      // @ts-expect-error — removing a DOM global on purpose
+      delete globalThis.CSS;
+      try {
+        const { user } = setup();
+        await user.click(combobox());
+        expect(optionNames()).toEqual(['Mainnet', 'Testnet', 'Stagenet']);
+      } finally {
+        if (descriptor) Object.defineProperty(globalThis, 'CSS', descriptor);
+      }
+    });
+
     it('lists every option it was given, in order', async () => {
       const { user } = setup();
 
