@@ -185,13 +185,18 @@ export function CustomSelect({
 
   // The list scrolls at max-h-48, and the active row is pointed at rather than focused, so nothing
   // brings it into view on its own.
+  //
+  // Found by position rather than by its id. The id comes from useId, whose values contain
+  // colons, so an id selector needs CSS.escape — and CSS is not a given: it exists in some jsdom
+  // environments and not others, so a consumer's test suite would crash here the moment the list
+  // opened, with a TypeError from inside this package. The rows are rendered in order from the
+  // same array activeIndex points into, so position is exact and needs nothing from the DOM API
+  // beyond what every environment has.
   useEffect(() => {
     if (!open || activeIndex < 0) return;
-    const row = dropRef.current?.querySelector<HTMLElement>(`#${CSS.escape(optionId(activeIndex))}`);
+    const row = dropRef.current?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex];
     row?.scrollIntoView?.({ block: 'nearest' });
-    // optionId is derived from listboxId, which is stable for this component's lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, activeIndex, listboxId]);
+  }, [open, activeIndex]);
 
   const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
 
